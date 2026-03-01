@@ -1,0 +1,27 @@
+version: "3.7"
+services:
+  finances-tracker-core:
+    build:
+      context: .
+      dockerfile: Dockerfile.develop
+    container_name: "finances-tracker-core"
+    env_file:
+      - ./.envs/.env.example
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/dist
+    ports:
+      - 5005:5005
+    depends_on:
+      - db
+  db:
+    image: postgis/postgis:14-3.2-alpine
+    env_file:
+      - ./.envs/.db
+    ports:
+      - "25432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+volumes:
+  db-data:
