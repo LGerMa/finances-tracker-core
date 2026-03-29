@@ -2,12 +2,8 @@ import { Injectable, Inject } from '@nestjs/common';
 import {
   AuthService as DoorkeeperAuthService,
   SessionService,
+  DeviceInfo,
 } from '@lgerma/nestjs-doorkeeper';
-
-export interface DeviceInfo {
-  ipAddress?: string;
-  userAgent?: string;
-}
 
 @Injectable()
 export class AuthService {
@@ -18,15 +14,23 @@ export class AuthService {
     private readonly sessionService: SessionService,
   ) {}
 
-  async register(email: string, password: string, device: DeviceInfo = {}) {
+  async register(
+    email: string,
+    password: string,
+    device: DeviceInfo = {} as DeviceInfo,
+  ) {
     return this.doorkeeperAuth.register(email, password, device);
   }
 
-  async login(email: string, password: string, device: DeviceInfo = {}) {
+  async login(
+    email: string,
+    password: string,
+    device: DeviceInfo = {} as DeviceInfo,
+  ) {
     return this.doorkeeperAuth.login(email, password, device);
   }
 
-  async refresh(refreshToken: string, device: DeviceInfo = {}) {
+  async refresh(refreshToken: string, device: DeviceInfo = {} as DeviceInfo) {
     return this.sessionService.rotateSession(refreshToken, device);
   }
 
