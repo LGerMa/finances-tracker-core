@@ -20,6 +20,7 @@ export class RequestLoggerInterceptor<T> implements NestInterceptor<T, T> {
   // Fields to mask (sensitive information)
   private readonly sensitiveFields: string[] = [
     // Add more fields to mask as needed
+    'password',
   ];
 
   private shouldSkipLogging(url: string): boolean {
