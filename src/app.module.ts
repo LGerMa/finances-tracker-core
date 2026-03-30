@@ -4,6 +4,7 @@ import { ConfigModule } from '@nestjs/config';
 import config from './config';
 import { AuthModule as AuthKeeperModule } from '@lgerma/nestjs-doorkeeper';
 import { AuthModule } from './auth/auth.module';
+import { UserModule } from './user/user.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -18,6 +19,7 @@ import { AuthModule } from './auth/auth.module';
       mountController: false,
     }),
     AuthModule,
+    UserModule,
   ],
   controllers: [],
   providers: [],
