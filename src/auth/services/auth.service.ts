@@ -1,0 +1,48 @@
+import { Injectable, Inject } from '@nestjs/common';
+import {
+  AuthService as DoorkeeperAuthService,
+  SessionService,
+  DeviceInfo,
+} from '@lgerma/nestjs-doorkeeper';
+import { ITokenPair } from '../interfaces/auth.interface';
+
+@Injectable()
+export class AuthService {
+  constructor(
+    @Inject(DoorkeeperAuthService)
+    private readonly doorkeeperAuth: DoorkeeperAuthService,
+    @Inject(SessionService)
+    private readonly sessionService: SessionService,
+  ) {}
+
+  async register(
+    email: string,
+    password: string,
+    device: DeviceInfo = {} as DeviceInfo,
+  ): Promise<ITokenPair> {
+    return this.doorkeeperAuth.register(email, password, device);
+  }
+
+  async login(
+    email: string,
+    password: string,
+    device: DeviceInfo = {} as DeviceInfo,
+  ): Promise<ITokenPair> {
+    return this.doorkeeperAuth.login(email, password, device);
+  }
+
+  async refresh(
+    refreshToken: string,
+    device: DeviceInfo = {} as DeviceInfo,
+  ): Promise<ITokenPair> {
+    return this.sessionService.rotateSession(refreshToken, device);
+  }
+
+  async logout(accessToken: string): Promise<void> {
+    return this.doorkeeperAuth.logout(accessToken);
+  }
+
+  async logoutAll(userId: string): Promise<void> {
+    return this.doorkeeperAuth.logoutAll(userId);
+  }
+}

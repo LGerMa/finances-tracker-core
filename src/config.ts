@@ -12,6 +12,10 @@ export default registerAs('config', () => {
     },
     internal: {},
     external: {},
-    general: {},
+    general: {
+      auth: {
+        token: process.env.JWT_SECRET || 'some-token',
+      },
+    },
   };
 });
