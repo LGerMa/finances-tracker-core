@@ -4,6 +4,7 @@ import {
   SessionService,
   DeviceInfo,
 } from '@lgerma/nestjs-doorkeeper';
+import { ITokenPair } from '../interfaces/auth.interface';
 
 @Injectable()
 export class AuthService {
@@ -18,7 +19,7 @@ export class AuthService {
     email: string,
     password: string,
     device: DeviceInfo = {} as DeviceInfo,
-  ) {
+  ): Promise<ITokenPair> {
     return this.doorkeeperAuth.register(email, password, device);
   }
 
@@ -26,19 +27,22 @@ export class AuthService {
     email: string,
     password: string,
     device: DeviceInfo = {} as DeviceInfo,
-  ) {
+  ): Promise<ITokenPair> {
     return this.doorkeeperAuth.login(email, password, device);
   }
 
-  async refresh(refreshToken: string, device: DeviceInfo = {} as DeviceInfo) {
+  async refresh(
+    refreshToken: string,
+    device: DeviceInfo = {} as DeviceInfo,
+  ): Promise<ITokenPair> {
     return this.sessionService.rotateSession(refreshToken, device);
   }
 
-  async logout(accessToken: string) {
+  async logout(accessToken: string): Promise<void> {
     return this.doorkeeperAuth.logout(accessToken);
   }
 
-  async logoutAll(userId: string) {
+  async logoutAll(userId: string): Promise<void> {
     return this.doorkeeperAuth.logoutAll(userId);
   }
 }

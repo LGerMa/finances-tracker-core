@@ -10,6 +10,8 @@ import { Request } from 'express';
 import {
   ApiTags,
   ApiOperation,
+  ApiOkResponse,
+  ApiCreatedResponse,
   ApiResponse,
   ApiBearerAuth,
 } from '@nestjs/swagger';
@@ -18,6 +20,7 @@ import { AuthService } from '../services/auth.service';
 import { RegisterDto } from '../dtos/register.dto';
 import { LoginDto } from '../dtos/login.dto';
 import { RefreshDto } from '../dtos/refresh.dto';
+import { TokenPairResponse } from '../dtos/token-pair.response';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -27,44 +30,39 @@ export class AuthController {
   @Public()
   @Post('register')
   @ApiOperation({ summary: 'Register a new user' })
-  @ApiResponse({
-    status: 201,
-    description: 'User registered, returns token pair',
-  })
+  @ApiCreatedResponse({ type: TokenPairResponse })
   @ApiResponse({ status: 400, description: 'Validation error' })
   @ApiResponse({ status: 409, description: 'Email already in use' })
-  register(@Body() dto: RegisterDto, @Req() req: Request) {
-    return this.authService.register(
-      dto.email,
-      dto.password,
-      deviceFrom(req as any),
-    );
+  register(
+    @Body() dto: RegisterDto,
+    @Req() req: Request,
+  ): Promise<TokenPairResponse> {
+    return this.authService.register(dto.email, dto.password, deviceFrom(req as any));
   }
 
   @Public()
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Login with email and password' })
-  @ApiResponse({
-    status: 200,
-    description: 'Login successful, returns token pair',
-  })
+  @ApiOkResponse({ type: TokenPairResponse })
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
-  login(@Body() dto: LoginDto, @Req() req: Request) {
-    return this.authService.login(
-      dto.email,
-      dto.password,
-      deviceFrom(req as any),
-    );
+  login(
+    @Body() dto: LoginDto,
+    @Req() req: Request,
+  ): Promise<TokenPairResponse> {
+    return this.authService.login(dto.email, dto.password, deviceFrom(req as any));
   }
 
   @Public()
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Rotate access and refresh tokens' })
-  @ApiResponse({ status: 200, description: 'Returns new token pair' })
+  @ApiOkResponse({ type: TokenPairResponse })
   @ApiResponse({ status: 401, description: 'Invalid or expired refresh token' })
-  refresh(@Body() dto: RefreshDto, @Req() req: Request) {
+  refresh(
+    @Body() dto: RefreshDto,
+    @Req() req: Request,
+  ): Promise<TokenPairResponse> {
     return this.authService.refresh(dto.refreshToken, deviceFrom(req as any));
   }
 
@@ -74,7 +72,7 @@ export class AuthController {
   @ApiOperation({ summary: 'Logout from current session' })
   @ApiResponse({ status: 200, description: 'Logged out successfully' })
   @ApiResponse({ status: 401, description: 'Missing or invalid access token' })
-  logout(@Req() req: Request & { accessToken: string }) {
+  logout(@Req() req: Request & { accessToken: string }): Promise<void> {
     return this.authService.logout(req.accessToken);
   }
 
@@ -84,7 +82,7 @@ export class AuthController {
   @ApiOperation({ summary: 'Logout from all devices' })
   @ApiResponse({ status: 200, description: 'Logged out from all sessions' })
   @ApiResponse({ status: 401, description: 'Missing or invalid access token' })
-  logoutAll(@CurrentUser() user: { id: string }) {
+  logoutAll(@CurrentUser() user: { id: string }): Promise<void> {
     return this.authService.logoutAll(user.id);
   }
 }
