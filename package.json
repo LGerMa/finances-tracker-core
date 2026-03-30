@@ -27,7 +27,7 @@
   },
   "dependencies": {
     "@casl/ability": "^6.8.0",
-    "@lgerma/nestjs-doorkeeper": "^1.0.0-rc.6",
+    "@lgerma/nestjs-doorkeeper": "^1.0.2-next.3",
     "@nestjs/common": "^11.1.16",
     "@nestjs/config": "^4.0.3",
     "@nestjs/core": "^11.1.16",
