@@ -20,9 +20,8 @@ import {
 } from '@nestjs/swagger';
 import { CurrentUser } from '@lgerma/nestjs-doorkeeper';
 import { TagsService } from '../services/tags.service';
-import { CreateTagDto } from '../dtos/create-tag.dto';
-import { UpdateTagDto } from '../dtos/update-tag.dto';
-import { TagResponse } from '../dtos/tag.response';
+import { CreateTagDto, UpdateTagDto } from '../dtos/tag.dto';
+import { TagResponse } from '../dtos/tag.response.dto';
 
 @ApiTags('tags')
 @ApiBearerAuth('JWT-auth')

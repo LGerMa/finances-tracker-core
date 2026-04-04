@@ -16,7 +16,7 @@ import {
 import { CurrentUser } from '@lgerma/nestjs-doorkeeper';
 import { UserService } from '../services/user.service';
 import { UpdateMeDto } from '../dtos/update-me.dto';
-import { UserProfileResponse } from '../dtos/user-profile.response';
+import { UserProfileResponse } from '../dtos/user-profile.response.dto';
 
 @ApiTags('users')
 @ApiBearerAuth('JWT-auth')
@@ -28,7 +28,7 @@ export class UserController {
   @ApiOperation({ summary: 'Get current user profile' })
   @ApiOkResponse({ type: UserProfileResponse })
   @ApiResponse({ status: 401, description: 'Missing or invalid access token' })
-  getMe(@CurrentUser() user): Promise<UserProfileResponse> {
+  getMe(@CurrentUser() user: { id: string }): Promise<UserProfileResponse> {
     return this.userService.getMe(user.id);
   }
 
@@ -38,7 +38,7 @@ export class UserController {
   @ApiOkResponse({ type: UserProfileResponse })
   @ApiResponse({ status: 401, description: 'Missing or invalid access token' })
   updateMe(
-    @CurrentUser() user,
+    @CurrentUser() user: { id: string },
     @Body() dto: UpdateMeDto,
   ): Promise<UserProfileResponse> {
     return this.userService.updateMe(user.id, dto);

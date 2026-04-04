@@ -6,8 +6,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { QueryFailedError, Repository } from 'typeorm';
 import { Tag } from '../entities/tag.entity';
-import { CreateTagDto } from '../dtos/create-tag.dto';
-import { UpdateTagDto } from '../dtos/update-tag.dto';
+import { CreateTagDto, UpdateTagDto } from '../dtos/tag.dto';
 import { ITag } from '../interfaces/tag.interface';
 
 const STARTER_TAGS = [
