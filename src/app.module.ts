@@ -7,6 +7,7 @@ import { AuthModule as AuthKeeperModule, JwtAuthGuard } from '@lgerma/nestjs-doo
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './users/user.module';
 import { TagsModule } from './tags/tags.module';
+import { ExpensesModule } from './expenses/expenses.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { TagsModule } from './tags/tags.module';
     AuthModule,
     UserModule,
     TagsModule,
+    ExpensesModule,
   ],
   controllers: [],
   providers: [
