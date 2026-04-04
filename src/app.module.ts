@@ -8,6 +8,7 @@ import { AuthModule } from './auth/auth.module';
 import { UserModule } from './users/user.module';
 import { TagsModule } from './tags/tags.module';
 import { ExpensesModule } from './expenses/expenses.module';
+import { IncomeModule } from './income/income.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { ExpensesModule } from './expenses/expenses.module';
     UserModule,
     TagsModule,
     ExpensesModule,
+    IncomeModule,
   ],
   controllers: [],
   providers: [
