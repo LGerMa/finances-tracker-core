@@ -1,9 +1,22 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Patch } from '@nestjs/common';
-import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Patch,
+} from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiOkResponse,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { CurrentUser } from '@lgerma/nestjs-doorkeeper';
 import { UserService } from '../services/user.service';
 import { UpdateMeDto } from '../dtos/update-me.dto';
-import { UserProfileResponse } from '../dtos/user-profile.response';
+import { UserProfileResponse } from '../dtos/user-profile.response.dto';
 
 @ApiTags('users')
 @ApiBearerAuth('JWT-auth')

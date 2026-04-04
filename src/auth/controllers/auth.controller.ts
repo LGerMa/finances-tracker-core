@@ -20,7 +20,7 @@ import { AuthService } from '../services/auth.service';
 import { RegisterDto } from '../dtos/register.dto';
 import { LoginDto } from '../dtos/login.dto';
 import { RefreshDto } from '../dtos/refresh.dto';
-import { TokenPairResponse } from '../dtos/token-pair.response';
+import { TokenPairResponse } from '../dtos/token-pair.response.dto';
 
 @ApiTags('auth')
 @Controller('auth')
