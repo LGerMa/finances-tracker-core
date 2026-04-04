@@ -18,6 +18,11 @@ export class UserService {
     return this.toProfile(user);
   }
 
+  async create(id: string, email: string): Promise<void> {
+    const user = this.userRepository.create({ id, email });
+    await this.userRepository.save(user);
+  }
+
   async updateMe(userId: string, dto: UpdateMeDto): Promise<IUserProfile> {
     await this.userRepository.update(userId, dto);
     return this.getMe(userId);
