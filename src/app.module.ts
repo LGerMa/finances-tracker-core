@@ -5,7 +5,8 @@ import { ConfigModule } from '@nestjs/config';
 import config from './config';
 import { AuthModule as AuthKeeperModule, JwtAuthGuard } from '@lgerma/nestjs-doorkeeper';
 import { AuthModule } from './auth/auth.module';
-import { UserModule } from './user/user.module';
+import { UserModule } from './users/user.module';
+import { TagsModule } from './tags/tags.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { UserModule } from './user/user.module';
     }),
     AuthModule,
     UserModule,
+    TagsModule,
   ],
   controllers: [],
   providers: [
