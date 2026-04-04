@@ -10,6 +10,8 @@ export interface IIncome {
   type: string;
   description: string | null;
   date: string;
+  source: string;
+  receiptUrl: string | null;
   tags: IIncomeTag[];
   createdAt: Date;
 }

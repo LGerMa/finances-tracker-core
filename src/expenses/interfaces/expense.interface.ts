@@ -10,6 +10,8 @@ export interface IExpense {
   paymentMethod: string;
   description: string | null;
   date: string;
+  source: string;
+  receiptUrl: string | null;
   tags: IExpenseTag[];
   createdAt: Date;
 }

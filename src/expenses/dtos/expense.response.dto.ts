@@ -1,6 +1,7 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IExpense, IExpenseTag } from '../interfaces/expense.interface';
 import { PaymentMethod } from '../enums/expense.enum';
+import { Source } from '../../common/enums/source.enum';
 
 export class ExpenseTagItem implements IExpenseTag {
   @ApiProperty() id: string;
@@ -14,6 +15,8 @@ export class ExpenseResponse implements IExpense {
   @ApiProperty({ enum: PaymentMethod }) paymentMethod: string;
   @ApiProperty({ nullable: true }) description: string | null;
   @ApiProperty({ example: '2026-03-28' }) date: string;
+  @ApiProperty({ enum: Source }) source: string;
+  @ApiPropertyOptional({ nullable: true }) receiptUrl: string | null;
   @ApiProperty({ type: () => [ExpenseTagItem] }) tags: ExpenseTagItem[];
   @ApiProperty() createdAt: Date;
 }

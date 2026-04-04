@@ -96,6 +96,8 @@ export class ExpensesService {
       paymentMethod: dto.paymentMethod,
       description: dto.description ?? null,
       date: dto.date,
+      source: dto.source,
+      receiptUrl: dto.receiptUrl ?? null,
       tags,
     });
     const saved = await this.expenseRepository.save(expense);
@@ -118,6 +120,8 @@ export class ExpensesService {
     if (dto.description !== undefined)
       expense.description = dto.description ?? null;
     if (dto.date !== undefined) expense.date = dto.date;
+    if (dto.source !== undefined) expense.source = dto.source;
+    if (dto.receiptUrl !== undefined) expense.receiptUrl = dto.receiptUrl ?? null;
 
     const saved = await this.expenseRepository.save(expense);
     return this.toExpense(saved);
@@ -160,6 +164,8 @@ export class ExpensesService {
       paymentMethod: expense.paymentMethod,
       description: expense.description,
       date: expense.date,
+      source: expense.source,
+      receiptUrl: expense.receiptUrl,
       tags: (expense.tags ?? []).map((t) => ({
         id: t.id,
         name: t.name,
