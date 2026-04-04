@@ -9,6 +9,7 @@ import { UserModule } from './users/user.module';
 import { TagsModule } from './tags/tags.module';
 import { ExpensesModule } from './expenses/expenses.module';
 import { IncomeModule } from './income/income.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { IncomeModule } from './income/income.module';
     TagsModule,
     ExpensesModule,
     IncomeModule,
+    DashboardModule,
   ],
   controllers: [],
   providers: [
