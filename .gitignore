@@ -58,3 +58,7 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 #envs
 .envs/.core.env
 .envs/.db.env
+
+# Claude
+CLAUDE.md
+DESIGN.md
