@@ -12,6 +12,7 @@ import { ExpenseQueryDto } from '../dtos/expense-query.dto';
 import { IExpense } from '../interfaces/expense.interface';
 import { PageDto } from '../../common/dtos/page.dto';
 import { PageMetaDto } from '../../common/dtos/page-meta.dto';
+import { PageOptionsDto } from 'src/common/dtos/page-options.dto';
 
 @Injectable()
 export class ExpensesService {
@@ -22,26 +23,37 @@ export class ExpensesService {
     private readonly tagRepository: Repository<Tag>,
   ) {}
 
-  async findAll(userId: string, queryDto: ExpenseQueryDto): Promise<PageDto<IExpense>> {
+  async findAll(
+    userId: string,
+    queryDto: ExpenseQueryDto,
+  ): Promise<PageDto<IExpense>> {
     const page = queryDto.page ?? 1;
     const take = queryDto.take ?? 10;
-    const skip = (page - 1) * take;
+
+    const pageOptionsDto = new PageOptionsDto(page, take);
 
     const qb = this.expenseRepository
       .createQueryBuilder('expense')
       .where('expense.userId = :userId', { userId });
 
     if (queryDto.startDate) {
-      qb.andWhere('expense.date >= :startDate', { startDate: queryDto.startDate });
+      qb.andWhere('expense.date >= :startDate', {
+        startDate: queryDto.startDate,
+      });
     }
     if (queryDto.endDate) {
       qb.andWhere('expense.date <= :endDate', { endDate: queryDto.endDate });
     }
     if (queryDto.paymentMethod) {
-      qb.andWhere('expense.paymentMethod = :paymentMethod', { paymentMethod: queryDto.paymentMethod });
+      qb.andWhere('expense.paymentMethod = :paymentMethod', {
+        paymentMethod: queryDto.paymentMethod,
+      });
     }
     if (queryDto.tags) {
-      const tagNames = queryDto.tags.split(',').map(t => t.trim()).filter(Boolean);
+      const tagNames = queryDto.tags
+        .split(',')
+        .map((t) => t.trim())
+        .filter(Boolean);
       if (tagNames.length > 0) {
         qb.andWhere(
           `expense.id IN (
@@ -60,12 +72,15 @@ export class ExpensesService {
       .leftJoinAndSelect('expense.tags', 'tag')
       .orderBy('expense.date', 'DESC')
       .addOrderBy('expense.created_at', 'DESC')
-      .skip(skip)
-      .take(take)
+      .skip(pageOptionsDto.skip)
+      .take(pageOptionsDto.take)
       .getMany();
 
     const meta = new PageMetaDto({ pageOptionsDto: queryDto, itemCount });
-    return new PageDto(items.map(e => this.toExpense(e)), meta);
+    return new PageDto(
+      items.map((e) => this.toExpense(e)),
+      meta,
+    );
   }
 
   async findOne(userId: string, id: string): Promise<IExpense> {
@@ -87,15 +102,21 @@ export class ExpensesService {
     return this.toExpense(saved);
   }
 
-  async update(userId: string, id: string, dto: UpdateExpenseDto): Promise<IExpense> {
+  async update(
+    userId: string,
+    id: string,
+    dto: UpdateExpenseDto,
+  ): Promise<IExpense> {
     const expense = await this.findOwned(userId, id);
 
     if (dto.tagIds !== undefined) {
       expense.tags = await this.resolveTagsForUser(userId, dto.tagIds);
     }
     if (dto.amount !== undefined) expense.amount = dto.amount;
-    if (dto.paymentMethod !== undefined) expense.paymentMethod = dto.paymentMethod;
-    if (dto.description !== undefined) expense.description = dto.description ?? null;
+    if (dto.paymentMethod !== undefined)
+      expense.paymentMethod = dto.paymentMethod;
+    if (dto.description !== undefined)
+      expense.description = dto.description ?? null;
     if (dto.date !== undefined) expense.date = dto.date;
 
     const saved = await this.expenseRepository.save(expense);
@@ -116,13 +137,18 @@ export class ExpensesService {
     return expense;
   }
 
-  private async resolveTagsForUser(userId: string, tagIds: string[]): Promise<Tag[]> {
+  private async resolveTagsForUser(
+    userId: string,
+    tagIds: string[],
+  ): Promise<Tag[]> {
     if (tagIds.length === 0) return [];
     const tags = await this.tagRepository.find({
       where: { id: In(tagIds), userId },
     });
     if (tags.length !== tagIds.length) {
-      throw new BadRequestException('One or more tagIds are invalid or do not belong to you');
+      throw new BadRequestException(
+        'One or more tagIds are invalid or do not belong to you',
+      );
     }
     return tags;
   }
@@ -134,7 +160,11 @@ export class ExpensesService {
       paymentMethod: expense.paymentMethod,
       description: expense.description,
       date: expense.date,
-      tags: (expense.tags ?? []).map(t => ({ id: t.id, name: t.name, color: t.color })),
+      tags: (expense.tags ?? []).map((t) => ({
+        id: t.id,
+        name: t.name,
+        color: t.color,
+      })),
       createdAt: expense.created_at,
     };
   }
