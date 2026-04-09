@@ -10,6 +10,8 @@ import { TagsModule } from './tags/tags.module';
 import { ExpensesModule } from './expenses/expenses.module';
 import { IncomeModule } from './income/income.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { BudgetsModule } from './budgets/budgets.module';
+import { RecurringModule } from './recurring/recurring.module';
 
 @Module({
   imports: [
@@ -30,6 +32,8 @@ import { DashboardModule } from './dashboard/dashboard.module';
     ExpensesModule,
     IncomeModule,
     DashboardModule,
+    BudgetsModule,
+    RecurringModule,
   ],
   controllers: [],
   providers: [

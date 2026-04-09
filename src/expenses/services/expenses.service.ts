@@ -129,7 +129,7 @@ export class ExpensesService {
 
   async remove(userId: string, id: string): Promise<void> {
     const expense = await this.findOwned(userId, id);
-    await this.expenseRepository.remove(expense);
+    await this.expenseRepository.softRemove(expense);
   }
 
   private async findOwned(userId: string, id: string): Promise<Expense> {

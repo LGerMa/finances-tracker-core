@@ -109,7 +109,7 @@ export class IncomeService {
 
   async remove(userId: string, id: string): Promise<void> {
     const income = await this.findOwned(userId, id);
-    await this.incomeRepository.remove(income);
+    await this.incomeRepository.softRemove(income);
   }
 
   private async findOwned(userId: string, id: string): Promise<Income> {
