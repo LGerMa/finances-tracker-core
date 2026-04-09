@@ -68,6 +68,7 @@ async function bootstrap() {
 
   console.log(`🚀 Server running on http://localhost:${port}`);
   console.log(`📚 Swagger docs available at http://localhost:${port}/api/docs`);
+  console.log(`📄 OpenAPI JSON schema at http://localhost:${port}/api/docs-json`);
 }
 
 bootstrap();
