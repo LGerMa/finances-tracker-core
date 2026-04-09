@@ -22,7 +22,7 @@ import {
 
 @ApiTags('dashboard')
 @ApiBearerAuth('JWT-auth')
-@Controller('dashboard')
+@Controller({ path: 'dashboard', version: '1' })
 export class DashboardController {
   constructor(private readonly dashboardService: DashboardService) {}
 

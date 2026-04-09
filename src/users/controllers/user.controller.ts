@@ -20,7 +20,7 @@ import { UserProfileResponse } from '../dtos/user-profile.response.dto';
 
 @ApiTags('users')
 @ApiBearerAuth('JWT-auth')
-@Controller('users')
+@Controller({ path: 'users', version: '1' })
 export class UserController {
   constructor(private readonly userService: UserService) {}
 

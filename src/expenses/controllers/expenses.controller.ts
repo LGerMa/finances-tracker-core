@@ -27,7 +27,7 @@ import { PageDto } from '../../common/dtos/page.dto';
 
 @ApiTags('expenses')
 @ApiBearerAuth('JWT-auth')
-@Controller('expenses')
+@Controller({ path: 'expenses', version: '1' })
 export class ExpensesController {
   constructor(private readonly expensesService: ExpensesService) {}
 
