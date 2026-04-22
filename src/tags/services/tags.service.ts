@@ -69,7 +69,7 @@ export class TagsService {
 
   async remove(userId: string, tagId: string): Promise<void> {
     const tag = await this.findOwned(userId, tagId);
-    await this.tagRepository.remove(tag);
+    await this.tagRepository.softRemove(tag);
   }
 
   async seedStarterTags(userId: string): Promise<void> {

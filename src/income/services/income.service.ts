@@ -82,6 +82,8 @@ export class IncomeService {
       type: dto.type,
       description: dto.description ?? null,
       date: dto.date,
+      source: dto.source,
+      receiptUrl: dto.receiptUrl ?? null,
       tags,
     });
     const saved = await this.incomeRepository.save(income);
@@ -98,6 +100,8 @@ export class IncomeService {
     if (dto.type !== undefined) income.type = dto.type;
     if (dto.description !== undefined) income.description = dto.description ?? null;
     if (dto.date !== undefined) income.date = dto.date;
+    if (dto.source !== undefined) income.source = dto.source;
+    if (dto.receiptUrl !== undefined) income.receiptUrl = dto.receiptUrl ?? null;
 
     const saved = await this.incomeRepository.save(income);
     return this.toIncome(saved);
@@ -105,7 +109,7 @@ export class IncomeService {
 
   async remove(userId: string, id: string): Promise<void> {
     const income = await this.findOwned(userId, id);
-    await this.incomeRepository.remove(income);
+    await this.incomeRepository.softRemove(income);
   }
 
   private async findOwned(userId: string, id: string): Promise<Income> {
@@ -137,6 +141,8 @@ export class IncomeService {
       type: income.type,
       description: income.description,
       date: income.date,
+      source: income.source,
+      receiptUrl: income.receiptUrl,
       tags: (income.tags ?? []).map((t) => ({ id: t.id, name: t.name, color: t.color })),
       createdAt: income.created_at,
     };

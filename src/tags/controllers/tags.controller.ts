@@ -25,7 +25,7 @@ import { TagResponse } from '../dtos/tag.response.dto';
 
 @ApiTags('tags')
 @ApiBearerAuth('JWT-auth')
-@Controller('tags')
+@Controller({ path: 'tags', version: '1' })
 export class TagsController {
   constructor(private readonly tagsService: TagsService) {}
 

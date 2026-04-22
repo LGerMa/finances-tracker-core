@@ -7,9 +7,11 @@ import {
   IsOptional,
   IsString,
   IsUUID,
+  IsUrl,
   Min,
 } from 'class-validator';
 import { IncomeType } from '../enums/income.enum';
+import { Source } from '../../common/enums/source.enum';
 
 export class CreateIncomeDto {
   @ApiProperty({ example: 2500.0 })
@@ -29,6 +31,16 @@ export class CreateIncomeDto {
   @ApiProperty({ example: '2026-03-01' })
   @IsDateString()
   date: string;
+
+  @ApiPropertyOptional({ enum: Source, default: Source.WEB })
+  @IsEnum(Source)
+  @IsOptional()
+  source?: Source;
+
+  @ApiPropertyOptional({ example: 'https://example.com/receipt.jpg' })
+  @IsUrl()
+  @IsOptional()
+  receiptUrl?: string;
 
   @ApiPropertyOptional({ type: [String], example: ['uuid-1'] })
   @IsArray()

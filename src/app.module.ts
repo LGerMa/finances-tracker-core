@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { DatabaseModule } from './database/database.module';
 import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 import config from './config';
 import { AuthModule as AuthKeeperModule, JwtAuthGuard } from '@lgerma/nestjs-doorkeeper';
 import { AuthModule } from './auth/auth.module';
@@ -9,6 +10,9 @@ import { UserModule } from './users/user.module';
 import { TagsModule } from './tags/tags.module';
 import { ExpensesModule } from './expenses/expenses.module';
 import { IncomeModule } from './income/income.module';
+import { DashboardModule } from './dashboard/dashboard.module';
+import { BudgetsModule } from './budgets/budgets.module';
+import { RecurringModule } from './recurring/recurring.module';
 
 @Module({
   imports: [
@@ -16,6 +20,7 @@ import { IncomeModule } from './income/income.module';
       isGlobal: true,
       load: [config],
     }),
+    ScheduleModule.forRoot(),
     DatabaseModule,
     AuthKeeperModule.forRoot({
       jwt: {
@@ -28,6 +33,9 @@ import { IncomeModule } from './income/income.module';
     TagsModule,
     ExpensesModule,
     IncomeModule,
+    DashboardModule,
+    BudgetsModule,
+    RecurringModule,
   ],
   controllers: [],
   providers: [

@@ -7,9 +7,11 @@ import {
   IsOptional,
   IsString,
   IsUUID,
+  IsUrl,
   Min,
 } from 'class-validator';
 import { PaymentMethod } from '../enums/expense.enum';
+import { Source } from '../../common/enums/source.enum';
 
 export class CreateExpenseDto {
   @ApiProperty({ example: 45.5 })
@@ -29,6 +31,16 @@ export class CreateExpenseDto {
   @ApiProperty({ example: '2026-03-28' })
   @IsDateString()
   date: string;
+
+  @ApiPropertyOptional({ enum: Source, default: Source.WEB })
+  @IsEnum(Source)
+  @IsOptional()
+  source?: Source;
+
+  @ApiPropertyOptional({ example: 'https://example.com/receipt.jpg' })
+  @IsUrl()
+  @IsOptional()
+  receiptUrl?: string;
 
   @ApiPropertyOptional({ type: [String], example: ['uuid-1', 'uuid-2'] })
   @IsArray()
