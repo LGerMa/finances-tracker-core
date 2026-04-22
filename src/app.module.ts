@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { DatabaseModule } from './database/database.module';
 import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 import config from './config';
 import { AuthModule as AuthKeeperModule, JwtAuthGuard } from '@lgerma/nestjs-doorkeeper';
 import { AuthModule } from './auth/auth.module';
@@ -19,6 +20,7 @@ import { RecurringModule } from './recurring/recurring.module';
       isGlobal: true,
       load: [config],
     }),
+    ScheduleModule.forRoot(),
     DatabaseModule,
     AuthKeeperModule.forRoot({
       jwt: {

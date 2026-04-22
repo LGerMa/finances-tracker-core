@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { Cron } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, LessThanOrEqual, Repository } from 'typeorm';
 import { RecurringEntry } from '../entities/recurring-entry.entity';
@@ -108,12 +109,7 @@ export class RecurringService {
     return this.toEntry(saved);
   }
 
-  // TODO: Install @nestjs/schedule to enable automatic recurring entry processing:
-  //   1. npm install @nestjs/schedule
-  //   2. Add ScheduleModule.forRoot() to AppModule imports
-  //   3. Uncomment the @Cron decorator below
-  //
-  // @Cron('5 0 * * *') // daily at 00:05
+  @Cron('5 0 * * *') // daily at 00:05
   async processRecurringEntries(): Promise<void> {
     const today = new Date().toISOString().split('T')[0];
 
