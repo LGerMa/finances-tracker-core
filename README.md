@@ -1,98 +1,113 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Keru — Core API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+**Keru** — _Keep Expenses Recorded & Understood_. A personal expense-tracking
+API: log expenses and income, organise them with tags, attribute spending to
+specific cards/accounts, set monthly budgets, schedule recurring entries, and
+view dashboard analytics.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+Built with **NestJS** + **TypeORM** + **PostgreSQL**. REST, all routes under
+`/api`, URI-versioned (`/api/v1/...`). Interactive docs at `/api/docs`.
 
-## Description
+---
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
-
-## Project setup
+## Getting started
 
 ```bash
-$ npm install
+npm install
+
+# copy and fill the env files
+# .envs/.core.env  — app config
+# .envs/.db.env    — database config
+
+# run the database + app with Docker (app on :5005, Postgres on :25432)
+docker compose up
+
+# or run the app directly against a local Postgres
+npm run start:dev
 ```
 
-## Compile and run the project
+### Migrations
+
+`synchronize` is disabled — all schema changes go through migrations.
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+npm run migrations:generate -- --name=SomeChange   # from entity changes
+npm run migrations:create   -- --name=SomeChange   # empty migration
+npm run migrations:run
+npm run migrations:revert
+npm run migrations:show
 ```
 
-## Run tests
+### Tests
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+npm run test          # unit
+npm run test:watch
+npm run test:cov
+npm run test:e2e
+npx jest src/expenses/tests/expenses.service.spec.ts   # a single file
 ```
 
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+### Lint / format
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+npm run lint          # ESLint, autofix
+npm run format        # Prettier
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+---
 
-## Resources
+## Architecture
 
-Check out a few resources that may come in handy when working with NestJS:
+Each domain module lives in `src/<domain>/`:
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+```
+controllers/   route handlers, Swagger decorators
+services/      business logic, repository access
+dtos/          request shapes (class-validator) + response classes (@ApiProperty)
+entities/      TypeORM entities (extend AbstractEntity)
+enums/         <entity>.enum.ts
+interfaces/    internal service contracts (no `any`)
+tests/         unit tests
+```
 
-## Support
+Shared code (interceptors, `AbstractEntity`, pagination DTOs) lives in
+`src/common/`.
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+### Modules
 
-## Stay in touch
+| Module            | Responsibility                                                        |
+| ----------------- | -------------------------------------------------------------------- |
+| `auth`            | Email/password auth, sessions, token rotation (`@lgerma/nestjs-doorkeeper`) |
+| `users`           | Profile (`GET`/`PATCH /users/me`)                                    |
+| `tags`            | User-defined tags; starter tags seeded on registration              |
+| `payment-sources` | User aliases for cards/accounts (e.g. `visa 8943`); expenses can be attributed to and filtered by one |
+| `expenses`        | Expense CRUD, filtering (date range, tags, payment method, payment source), pagination |
+| `income`          | Income CRUD (fixed / sporadic) with tags                            |
+| `budgets`         | Monthly budget per tag, with spend status                           |
+| `recurring`       | Recurring entries, processed on a schedule (`@nestjs/schedule`)     |
+| `dashboard`       | Aggregated summaries and tag-based analytics                        |
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+### Conventions
 
-## License
+- **Auth** — all routes protected by a global `JwtAuthGuard`; opt out with
+  `@Public()`. `@CurrentUser()` gives `{ id: string }`. Protected controllers
+  carry `@ApiBearerAuth('JWT-auth')`.
+- **Validation** — global `ValidationPipe` with `whitelist` +
+  `forbidNonWhitelisted`; every DTO field needs a class-validator decorator.
+- **Responses** — wrapped by `ResponseInterceptor` in a `{ code, message, data }`
+  envelope.
+- **Typing** — services return interfaces (`interfaces/`), controllers declare
+  Swagger-decorated response classes (`dtos/*.response.dto.ts`). Keeps the
+  service layer free of presentation concerns for cross-module calls.
+- **Pagination** — use `PageOptionsDto` / `PageMetaDto` / `PageDto` from
+  `src/common/dtos/`; construct `new PageOptionsDto(page, take)` in the service.
+- **Soft delete** — `AbstractEntity` provides `deleted_at`; delete endpoints use
+  `softRemove`.
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+---
+
+## API reference
+
+- Swagger UI: `/api/docs`
+- OpenAPI JSON: `/api/docs-json`
