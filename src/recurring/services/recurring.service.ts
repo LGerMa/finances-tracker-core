@@ -32,7 +32,10 @@ export class RecurringService {
     return entries.map(this.toEntry);
   }
 
-  async create(userId: string, dto: CreateRecurringDto): Promise<IRecurringEntry> {
+  async create(
+    userId: string,
+    dto: CreateRecurringDto,
+  ): Promise<IRecurringEntry> {
     const tags = dto.tagIds?.length
       ? await this.tagRepository.find({
           where: { id: In(dto.tagIds), userId },
@@ -77,7 +80,9 @@ export class RecurringService {
       ...(dto.entryType !== undefined && { entryType: dto.entryType }),
       ...(dto.amount !== undefined && { amount: dto.amount }),
       ...(dto.description !== undefined && { description: dto.description }),
-      ...(dto.paymentMethod !== undefined && { paymentMethod: dto.paymentMethod }),
+      ...(dto.paymentMethod !== undefined && {
+        paymentMethod: dto.paymentMethod,
+      }),
       ...(dto.incomeType !== undefined && { incomeType: dto.incomeType }),
       ...(dto.frequency !== undefined && { frequency: dto.frequency }),
       ...(dto.dayOfMonth !== undefined && { dayOfMonth: dto.dayOfMonth }),
@@ -121,7 +126,8 @@ export class RecurringService {
       if (entry.entryType === 'expense') {
         await this.expensesService.create(entry.userId, {
           amount: Number(entry.amount),
-          paymentMethod: (entry.paymentMethod ?? PaymentMethod.CASH) as PaymentMethod,
+          paymentMethod: (entry.paymentMethod ??
+            PaymentMethod.CASH) as PaymentMethod,
           description: entry.description ?? undefined,
           date: today,
           source: Source.WEB,
@@ -160,7 +166,10 @@ export class RecurringService {
     return current.toISOString().split('T')[0];
   }
 
-  private async findOwned(userId: string, entryId: string): Promise<RecurringEntry> {
+  private async findOwned(
+    userId: string,
+    entryId: string,
+  ): Promise<RecurringEntry> {
     const entry = await this.recurringRepository.findOne({
       where: { id: entryId, userId },
     });
@@ -180,7 +189,11 @@ export class RecurringService {
     dayOfWeek: entry.dayOfWeek,
     nextDate: entry.nextDate,
     isActive: entry.isActive,
-    tags: (entry.tags ?? []).map((t) => ({ id: t.id, name: t.name, color: t.color })),
+    tags: (entry.tags ?? []).map((t) => ({
+      id: t.id,
+      name: t.name,
+      color: t.color,
+    })),
     createdAt: entry.created_at,
   });
 }

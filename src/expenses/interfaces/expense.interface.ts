@@ -4,6 +4,12 @@ export interface IExpenseTag {
   color: string;
 }
 
+export interface IExpensePaymentSource {
+  id: string;
+  alias: string;
+  color: string;
+}
+
 export interface IExpense {
   id: string;
   amount: number;
@@ -13,5 +19,6 @@ export interface IExpense {
   source: string;
   receiptUrl: string | null;
   tags: IExpenseTag[];
+  paymentSource: IExpensePaymentSource | null;
   createdAt: Date;
 }

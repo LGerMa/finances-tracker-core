@@ -1,4 +1,4 @@
-import { ApiProperty } from "@nestjs/swagger";
+import { ApiProperty } from '@nestjs/swagger';
 
 export class GeneralResponseDto<Data = {}> {
   @ApiProperty()
@@ -6,5 +6,5 @@ export class GeneralResponseDto<Data = {}> {
   @ApiProperty()
   message: string;
   @ApiProperty()
-  data: Data[] | Data
+  data: Data[] | Data;
 }

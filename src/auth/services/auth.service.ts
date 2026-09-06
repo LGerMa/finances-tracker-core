@@ -26,9 +26,15 @@ export class AuthService {
     password: string,
     device: DeviceInfo = {} as DeviceInfo,
   ): Promise<ITokenPair> {
-    const tokenPair = await this.doorkeeperAuth.register(email, password, device);
+    const tokenPair = await this.doorkeeperAuth.register(
+      email,
+      password,
+      device,
+    );
     const { sub } = JSON.parse(
-      Buffer.from(tokenPair.accessToken.split('.')[1], 'base64url').toString('utf-8'),
+      Buffer.from(tokenPair.accessToken.split('.')[1], 'base64url').toString(
+        'utf-8',
+      ),
     ) as { sub: string };
     await this.userService.create(sub, email);
     await this.tagsService.seedStarterTags(sub);

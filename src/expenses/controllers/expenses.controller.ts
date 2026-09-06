@@ -32,7 +32,9 @@ export class ExpensesController {
   constructor(private readonly expensesService: ExpensesService) {}
 
   @Get()
-  @ApiOperation({ summary: 'List expenses with optional filters and pagination' })
+  @ApiOperation({
+    summary: 'List expenses with optional filters and pagination',
+  })
   @ApiOkResponse({ type: PageDto })
   findAll(
     @CurrentUser() user: { id: string },
@@ -55,7 +57,10 @@ export class ExpensesController {
   @Post()
   @ApiOperation({ summary: 'Create a new expense' })
   @ApiCreatedResponse({ type: ExpenseResponse })
-  @ApiResponse({ status: 400, description: 'Validation error or invalid tagIds' })
+  @ApiResponse({
+    status: 400,
+    description: 'Validation error or invalid tagIds',
+  })
   create(
     @CurrentUser() user: { id: string },
     @Body() dto: CreateExpenseDto,
@@ -81,10 +86,7 @@ export class ExpensesController {
   @ApiOperation({ summary: 'Delete an expense' })
   @ApiOkResponse({ description: 'Expense deleted' })
   @ApiResponse({ status: 404, description: 'Expense not found' })
-  async remove(
-    @CurrentUser() user: { id: string },
-    @Param('id') id: string,
-  ) {
+  async remove(@CurrentUser() user: { id: string }, @Param('id') id: string) {
     await this.expensesService.remove(user.id, id);
     return { message: 'Expense deleted' };
   }

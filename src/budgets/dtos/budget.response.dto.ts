@@ -1,5 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IBudget, IBudgetStatus, IBudgetTag, BudgetStatusLevel } from '../interfaces/budget.interface';
+import {
+  IBudget,
+  IBudgetStatus,
+  IBudgetTag,
+  BudgetStatusLevel,
+} from '../interfaces/budget.interface';
 
 export class BudgetTagItem implements IBudgetTag {
   @ApiProperty() id: string;
@@ -20,5 +25,6 @@ export class BudgetStatusResponse implements IBudgetStatus {
   @ApiProperty() spent: number;
   @ApiProperty() remaining: number;
   @ApiProperty() percentage: number;
-  @ApiProperty({ enum: ['normal', 'warning', 'over'] }) status: BudgetStatusLevel;
+  @ApiProperty({ enum: ['normal', 'warning', 'over'] })
+  status: BudgetStatusLevel;
 }

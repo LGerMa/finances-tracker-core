@@ -4,10 +4,14 @@ import { DatabaseModule } from './database/database.module';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import config from './config';
-import { AuthModule as AuthKeeperModule, JwtAuthGuard } from '@lgerma/nestjs-doorkeeper';
+import {
+  AuthModule as AuthKeeperModule,
+  JwtAuthGuard,
+} from '@lgerma/nestjs-doorkeeper';
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './users/user.module';
 import { TagsModule } from './tags/tags.module';
+import { PaymentSourcesModule } from './payment-sources/payment-sources.module';
 import { ExpensesModule } from './expenses/expenses.module';
 import { IncomeModule } from './income/income.module';
 import { DashboardModule } from './dashboard/dashboard.module';
@@ -31,6 +35,7 @@ import { RecurringModule } from './recurring/recurring.module';
     AuthModule,
     UserModule,
     TagsModule,
+    PaymentSourcesModule,
     ExpensesModule,
     IncomeModule,
     DashboardModule,

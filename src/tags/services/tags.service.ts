@@ -53,7 +53,11 @@ export class TagsService {
     }
   }
 
-  async update(userId: string, tagId: string, dto: UpdateTagDto): Promise<ITag> {
+  async update(
+    userId: string,
+    tagId: string,
+    dto: UpdateTagDto,
+  ): Promise<ITag> {
     const tag = await this.findOwned(userId, tagId);
     Object.assign(tag, dto);
     try {

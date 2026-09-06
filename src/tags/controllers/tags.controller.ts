@@ -39,7 +39,10 @@ export class TagsController {
   @Post()
   @ApiOperation({ summary: 'Create a new tag' })
   @ApiCreatedResponse({ type: TagResponse })
-  @ApiResponse({ status: 409, description: 'Tag name already exists for this user' })
+  @ApiResponse({
+    status: 409,
+    description: 'Tag name already exists for this user',
+  })
   create(@CurrentUser() user, @Body() dto: CreateTagDto): Promise<TagResponse> {
     return this.tagsService.create(user.id, dto);
   }

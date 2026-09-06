@@ -16,7 +16,8 @@ export class IncomeQueryDto extends PageOptionsDto {
 
   @ApiPropertyOptional({
     example: 'salary,freelance',
-    description: 'Comma-separated tag names — returns income matching ANY of the tags',
+    description:
+      'Comma-separated tag names — returns income matching ANY of the tags',
   })
   @IsString()
   @IsOptional()

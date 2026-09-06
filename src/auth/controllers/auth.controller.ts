@@ -37,7 +37,11 @@ export class AuthController {
     @Body() dto: RegisterDto,
     @Req() req: Request,
   ): Promise<TokenPairResponse> {
-    return this.authService.register(dto.email, dto.password, deviceFrom(req as any));
+    return this.authService.register(
+      dto.email,
+      dto.password,
+      deviceFrom(req as any),
+    );
   }
 
   @Public()
@@ -50,7 +54,11 @@ export class AuthController {
     @Body() dto: LoginDto,
     @Req() req: Request,
   ): Promise<TokenPairResponse> {
-    return this.authService.login(dto.email, dto.password, deviceFrom(req as any));
+    return this.authService.login(
+      dto.email,
+      dto.password,
+      deviceFrom(req as any),
+    );
   }
 
   @Public()

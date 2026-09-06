@@ -29,7 +29,10 @@ export class DashboardService {
     private readonly tagRepository: Repository<Tag>,
   ) {}
 
-  async summary(userId: string, queryDto: SummaryQueryDto): Promise<IDashboardSummary> {
+  async summary(
+    userId: string,
+    queryDto: SummaryQueryDto,
+  ): Promise<IDashboardSummary> {
     const month = queryDto.month ?? this.currentMonth();
     const { startDate, endDate } = this.monthToDateRange(month);
 
@@ -60,7 +63,10 @@ export class DashboardService {
     };
   }
 
-  async byTags(userId: string, queryDto: ByTagsQueryDto): Promise<ITagBreakdownItem[]> {
+  async byTags(
+    userId: string,
+    queryDto: ByTagsQueryDto,
+  ): Promise<ITagBreakdownItem[]> {
     const month = queryDto.month ?? this.currentMonth();
     const type = queryDto.type ?? 'expense';
     const { startDate, endDate } = this.monthToDateRange(month);
@@ -68,11 +74,17 @@ export class DashboardService {
     const table = type === 'expense' ? 'expenses' : 'income';
     const joinTable = type === 'expense' ? 'expense_tags' : 'income_tags';
     const joinColumn = type === 'expense' ? 'expense_id' : 'income_id';
-    const repo = type === 'expense' ? this.expenseRepository : this.incomeRepository;
+    const repo =
+      type === 'expense' ? this.expenseRepository : this.incomeRepository;
 
-    const taggedRows: Array<{ id: string; name: string; color: string; total: string; count: string }> =
-      await repo.query(
-        `SELECT t.id, t.name, t.color,
+    const taggedRows: Array<{
+      id: string;
+      name: string;
+      color: string;
+      total: string;
+      count: string;
+    }> = await repo.query(
+      `SELECT t.id, t.name, t.color,
                 COALESCE(SUM(e.amount), 0) as total,
                 COUNT(e.id) as count
          FROM ${table} e
@@ -81,16 +93,17 @@ export class DashboardService {
          WHERE e.user_id = $1 AND e.date >= $2 AND e.date < $3
          GROUP BY t.id, t.name, t.color
          ORDER BY total DESC`,
-        [userId, startDate, endDate],
-      );
+      [userId, startDate, endDate],
+    );
 
-    const [untaggedRow]: Array<{ total: string; count: string }> = await repo.query(
-      `SELECT COALESCE(SUM(e.amount), 0) as total, COUNT(e.id) as count
+    const [untaggedRow]: Array<{ total: string; count: string }> =
+      await repo.query(
+        `SELECT COALESCE(SUM(e.amount), 0) as total, COUNT(e.id) as count
        FROM ${table} e
        WHERE e.user_id = $1 AND e.date >= $2 AND e.date < $3
          AND e.id NOT IN (SELECT ${joinColumn} FROM ${joinTable})`,
-      [userId, startDate, endDate],
-    );
+        [userId, startDate, endDate],
+      );
 
     const result: ITagBreakdownItem[] = taggedRows.map((row) => ({
       tag: { id: row.id, name: row.name, color: row.color },
@@ -110,7 +123,10 @@ export class DashboardService {
     return result;
   }
 
-  async compareTags(userId: string, queryDto: CompareTagsQueryDto): Promise<ICompareTags> {
+  async compareTags(
+    userId: string,
+    queryDto: CompareTagsQueryDto,
+  ): Promise<ICompareTags> {
     const tagNames = queryDto.tags
       .split(',')
       .map((t) => t.trim())
@@ -127,11 +143,15 @@ export class DashboardService {
     const table = type === 'expense' ? 'expenses' : 'income';
     const joinTable = type === 'expense' ? 'expense_tags' : 'income_tags';
     const joinColumn = type === 'expense' ? 'expense_id' : 'income_id';
-    const repo = type === 'expense' ? this.expenseRepository : this.incomeRepository;
+    const repo =
+      type === 'expense' ? this.expenseRepository : this.incomeRepository;
 
     const tags = await this.tagRepository
       .createQueryBuilder('tag')
-      .where('tag.userId = :userId AND tag.name IN (:...tagNames)', { userId, tagNames })
+      .where('tag.userId = :userId AND tag.name IN (:...tagNames)', {
+        userId,
+        tagNames,
+      })
       .getMany();
 
     const foundNames = tags.map((t) => t.name);
@@ -178,7 +198,10 @@ export class DashboardService {
     };
   }
 
-  async trends(userId: string, queryDto: TrendsQueryDto): Promise<ITrendItem[]> {
+  async trends(
+    userId: string,
+    queryDto: TrendsQueryDto,
+  ): Promise<ITrendItem[]> {
     const months = queryDto.months ?? 6;
     const { startDate } = this.nMonthsAgo(months);
 
@@ -202,14 +225,26 @@ export class DashboardService {
         [userId, startDate],
       );
 
-    const monthMap = new Map<string, { totalIncome: number; totalExpenses: number }>();
+    const monthMap = new Map<
+      string,
+      { totalIncome: number; totalExpenses: number }
+    >();
 
     for (const row of expenseRows) {
-      monthMap.set(row.month, { totalIncome: 0, totalExpenses: parseFloat(row.total) });
+      monthMap.set(row.month, {
+        totalIncome: 0,
+        totalExpenses: parseFloat(row.total),
+      });
     }
     for (const row of incomeRows) {
-      const existing = monthMap.get(row.month) ?? { totalIncome: 0, totalExpenses: 0 };
-      monthMap.set(row.month, { ...existing, totalIncome: parseFloat(row.total) });
+      const existing = monthMap.get(row.month) ?? {
+        totalIncome: 0,
+        totalExpenses: 0,
+      };
+      monthMap.set(row.month, {
+        ...existing,
+        totalIncome: parseFloat(row.total),
+      });
     }
 
     return Array.from(monthMap.entries())
@@ -222,7 +257,10 @@ export class DashboardService {
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   }
 
-  private monthToDateRange(month: string): { startDate: string; endDate: string } {
+  private monthToDateRange(month: string): {
+    startDate: string;
+    endDate: string;
+  } {
     const [year, mon] = month.split('-').map(Number);
     const start = new Date(Date.UTC(year, mon - 1, 1));
     const end = new Date(Date.UTC(year, mon, 1));
@@ -232,10 +270,16 @@ export class DashboardService {
     };
   }
 
-  private nMonthsAgo(n: number): { fromMonth: string; toMonth: string; startDate: string } {
+  private nMonthsAgo(n: number): {
+    fromMonth: string;
+    toMonth: string;
+    startDate: string;
+  } {
     const now = new Date();
     const toMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-    const from = new Date(Date.UTC(now.getFullYear(), now.getMonth() - (n - 1), 1));
+    const from = new Date(
+      Date.UTC(now.getFullYear(), now.getMonth() - (n - 1), 1),
+    );
     const fromMonth = `${from.getUTCFullYear()}-${String(from.getUTCMonth() + 1).padStart(2, '0')}`;
     return {
       fromMonth,
@@ -244,9 +288,13 @@ export class DashboardService {
     };
   }
 
-  private calcTrend(monthData: { month: string; total: number }[]): 'up' | 'down' | 'stable' {
+  private calcTrend(
+    monthData: { month: string; total: number }[],
+  ): 'up' | 'down' | 'stable' {
     if (monthData.length < 2) return 'stable';
-    const sorted = [...monthData].sort((a, b) => b.month.localeCompare(a.month));
+    const sorted = [...monthData].sort((a, b) =>
+      b.month.localeCompare(a.month),
+    );
     const half = Math.ceil(sorted.length / 2);
     const recent = sorted.slice(0, half);
     const older = sorted.slice(half);
