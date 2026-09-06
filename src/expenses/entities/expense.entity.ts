@@ -1,7 +1,15 @@
-import { Column, Entity, JoinColumn, JoinTable, ManyToMany, ManyToOne } from 'typeorm';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  JoinTable,
+  ManyToMany,
+  ManyToOne,
+} from 'typeorm';
 import { AbstractEntity } from '../../common/entities/abstract.entity';
 import { User } from '../../users/entities/user.entity';
 import { Tag } from '../../tags/entities/tag.entity';
+import { PaymentSource } from '../../payment-sources/entities/payment-source.entity';
 import { PaymentMethod } from '../enums/expense.enum';
 import { Source } from '../../common/enums/source.enum';
 
@@ -28,9 +36,16 @@ export class Expense extends AbstractEntity {
   @Column({ name: 'receipt_url', type: 'text', nullable: true })
   receiptUrl: string | null;
 
+  @Column({ name: 'payment_source_id', type: 'uuid', nullable: true })
+  paymentSourceId: string | null;
+
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
   user: User;
+
+  @ManyToOne(() => PaymentSource, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'payment_source_id' })
+  paymentSource: PaymentSource | null;
 
   @ManyToMany(() => Tag)
   @JoinTable({

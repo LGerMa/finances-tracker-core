@@ -31,7 +31,9 @@ export class RecurringController {
   @Get()
   @ApiOperation({ summary: 'List all recurring entries for the current user' })
   @ApiOkResponse({ type: [RecurringEntryResponse] })
-  findAll(@CurrentUser() user: { id: string }): Promise<RecurringEntryResponse[]> {
+  findAll(
+    @CurrentUser() user: { id: string },
+  ): Promise<RecurringEntryResponse[]> {
     return this.recurringService.findAll(user.id);
   }
 
@@ -79,7 +81,9 @@ export class RecurringController {
   }
 
   @Post(':id/resume')
-  @ApiOperation({ summary: 'Resume a recurring entry (recalculates next_date)' })
+  @ApiOperation({
+    summary: 'Resume a recurring entry (recalculates next_date)',
+  })
   @ApiOkResponse({ type: RecurringEntryResponse })
   @ApiResponse({ status: 404, description: 'Recurring entry not found' })
   resume(

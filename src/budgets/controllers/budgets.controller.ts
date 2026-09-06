@@ -20,7 +20,10 @@ import {
 import { CurrentUser } from '@lgerma/nestjs-doorkeeper';
 import { BudgetsService } from '../services/budgets.service';
 import { CreateBudgetDto, UpdateBudgetDto } from '../dtos/budget.dto';
-import { BudgetResponse, BudgetStatusResponse } from '../dtos/budget.response.dto';
+import {
+  BudgetResponse,
+  BudgetStatusResponse,
+} from '../dtos/budget.response.dto';
 
 @ApiTags('budgets')
 @ApiBearerAuth('JWT-auth')
@@ -37,10 +40,13 @@ export class BudgetsController {
 
   @Get('status')
   @ApiOperation({
-    summary: 'Budget status — all tags with budgets, current month spending, and % used',
+    summary:
+      'Budget status — all tags with budgets, current month spending, and % used',
   })
   @ApiOkResponse({ type: [BudgetStatusResponse] })
-  getStatus(@CurrentUser() user: { id: string }): Promise<BudgetStatusResponse[]> {
+  getStatus(
+    @CurrentUser() user: { id: string },
+  ): Promise<BudgetStatusResponse[]> {
     return this.budgetsService.getStatus(user.id);
   }
 
@@ -48,7 +54,10 @@ export class BudgetsController {
   @ApiOperation({ summary: 'Create a budget for a tag' })
   @ApiCreatedResponse({ type: BudgetResponse })
   @ApiResponse({ status: 404, description: 'Tag not found' })
-  @ApiResponse({ status: 409, description: 'Budget for this tag already exists' })
+  @ApiResponse({
+    status: 409,
+    description: 'Budget for this tag already exists',
+  })
   create(
     @CurrentUser() user: { id: string },
     @Body() dto: CreateBudgetDto,
@@ -73,10 +82,7 @@ export class BudgetsController {
   @ApiOperation({ summary: 'Remove budget from a tag' })
   @ApiOkResponse({ description: 'Budget deleted' })
   @ApiResponse({ status: 404, description: 'Budget not found' })
-  async remove(
-    @CurrentUser() user: { id: string },
-    @Param('id') id: string,
-  ) {
+  async remove(@CurrentUser() user: { id: string }, @Param('id') id: string) {
     await this.budgetsService.remove(user.id, id);
     return { message: 'Budget deleted' };
   }

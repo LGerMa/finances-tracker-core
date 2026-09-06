@@ -25,7 +25,8 @@ export class TagBreakdownTagDto implements ITagBreakdownTag {
 }
 
 export class TagBreakdownItemResponse implements ITagBreakdownItem {
-  @ApiPropertyOptional({ type: () => TagBreakdownTagDto }) tag?: TagBreakdownTagDto;
+  @ApiPropertyOptional({ type: () => TagBreakdownTagDto })
+  tag?: TagBreakdownTagDto;
   @ApiPropertyOptional() untagged?: boolean;
   @ApiProperty() total: number;
   @ApiProperty() count: number;
@@ -38,9 +39,13 @@ export class CompareTagMonthDto implements ICompareTagMonth {
 
 export class CompareTagItemResponse implements ICompareTagItem {
   @ApiProperty({ type: () => TagBreakdownTagDto }) tag: TagBreakdownTagDto;
-  @ApiProperty({ type: () => [CompareTagMonthDto] }) months: CompareTagMonthDto[];
+  @ApiProperty({ type: () => [CompareTagMonthDto] })
+  months: CompareTagMonthDto[];
   @ApiProperty() average: number;
-  @ApiProperty({ enum: ['up', 'down', 'stable'] }) trend: 'up' | 'down' | 'stable';
+  @ApiProperty({ enum: ['up', 'down', 'stable'] }) trend:
+    | 'up'
+    | 'down'
+    | 'stable';
 }
 
 export class ComparePeriodDto {
@@ -50,7 +55,8 @@ export class ComparePeriodDto {
 
 export class CompareTagsResponse implements ICompareTags {
   @ApiProperty({ type: () => ComparePeriodDto }) period: ComparePeriodDto;
-  @ApiProperty({ type: () => [CompareTagItemResponse] }) tags: CompareTagItemResponse[];
+  @ApiProperty({ type: () => [CompareTagItemResponse] })
+  tags: CompareTagItemResponse[];
 }
 
 export class TrendItemResponse implements ITrendItem {

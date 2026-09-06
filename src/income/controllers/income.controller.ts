@@ -32,7 +32,9 @@ export class IncomeController {
   constructor(private readonly incomeService: IncomeService) {}
 
   @Get()
-  @ApiOperation({ summary: 'List income entries with optional filters and pagination' })
+  @ApiOperation({
+    summary: 'List income entries with optional filters and pagination',
+  })
   @ApiOkResponse({ type: PageDto })
   findAll(
     @CurrentUser() user: { id: string },
@@ -55,7 +57,10 @@ export class IncomeController {
   @Post()
   @ApiOperation({ summary: 'Create a new income entry' })
   @ApiCreatedResponse({ type: IncomeResponse })
-  @ApiResponse({ status: 400, description: 'Validation error or invalid tagIds' })
+  @ApiResponse({
+    status: 400,
+    description: 'Validation error or invalid tagIds',
+  })
   create(
     @CurrentUser() user: { id: string },
     @Body() dto: CreateIncomeDto,
@@ -81,10 +86,7 @@ export class IncomeController {
   @ApiOperation({ summary: 'Delete an income entry' })
   @ApiOkResponse({ description: 'Income deleted' })
   @ApiResponse({ status: 404, description: 'Income not found' })
-  async remove(
-    @CurrentUser() user: { id: string },
-    @Param('id') id: string,
-  ) {
+  async remove(@CurrentUser() user: { id: string }, @Param('id') id: string) {
     await this.incomeService.remove(user.id, id);
     return { message: 'Income deleted' };
   }

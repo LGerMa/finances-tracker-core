@@ -23,7 +23,10 @@ export class IncomeService {
     private readonly tagRepository: Repository<Tag>,
   ) {}
 
-  async findAll(userId: string, queryDto: IncomeQueryDto): Promise<PageDto<IIncome>> {
+  async findAll(
+    userId: string,
+    queryDto: IncomeQueryDto,
+  ): Promise<PageDto<IIncome>> {
     const page = queryDto.page ?? 1;
     const take = queryDto.take ?? 10;
     const pageOptionsDto = new PageOptionsDto(page, take);
@@ -33,7 +36,9 @@ export class IncomeService {
       .where('income.userId = :userId', { userId });
 
     if (queryDto.startDate) {
-      qb.andWhere('income.date >= :startDate', { startDate: queryDto.startDate });
+      qb.andWhere('income.date >= :startDate', {
+        startDate: queryDto.startDate,
+      });
     }
     if (queryDto.endDate) {
       qb.andWhere('income.date <= :endDate', { endDate: queryDto.endDate });
@@ -42,7 +47,10 @@ export class IncomeService {
       qb.andWhere('income.type = :type', { type: queryDto.type });
     }
     if (queryDto.tags) {
-      const tagNames = queryDto.tags.split(',').map((t) => t.trim()).filter(Boolean);
+      const tagNames = queryDto.tags
+        .split(',')
+        .map((t) => t.trim())
+        .filter(Boolean);
       if (tagNames.length > 0) {
         qb.andWhere(
           `income.id IN (
@@ -66,7 +74,10 @@ export class IncomeService {
       .getMany();
 
     const meta = new PageMetaDto({ pageOptionsDto, itemCount });
-    return new PageDto(items.map((e) => this.toIncome(e)), meta);
+    return new PageDto(
+      items.map((e) => this.toIncome(e)),
+      meta,
+    );
   }
 
   async findOne(userId: string, id: string): Promise<IIncome> {
@@ -90,7 +101,11 @@ export class IncomeService {
     return this.toIncome(saved);
   }
 
-  async update(userId: string, id: string, dto: UpdateIncomeDto): Promise<IIncome> {
+  async update(
+    userId: string,
+    id: string,
+    dto: UpdateIncomeDto,
+  ): Promise<IIncome> {
     const income = await this.findOwned(userId, id);
 
     if (dto.tagIds !== undefined) {
@@ -98,10 +113,12 @@ export class IncomeService {
     }
     if (dto.amount !== undefined) income.amount = dto.amount;
     if (dto.type !== undefined) income.type = dto.type;
-    if (dto.description !== undefined) income.description = dto.description ?? null;
+    if (dto.description !== undefined)
+      income.description = dto.description ?? null;
     if (dto.date !== undefined) income.date = dto.date;
     if (dto.source !== undefined) income.source = dto.source;
-    if (dto.receiptUrl !== undefined) income.receiptUrl = dto.receiptUrl ?? null;
+    if (dto.receiptUrl !== undefined)
+      income.receiptUrl = dto.receiptUrl ?? null;
 
     const saved = await this.incomeRepository.save(income);
     return this.toIncome(saved);
@@ -121,7 +138,10 @@ export class IncomeService {
     return income;
   }
 
-  private async resolveTagsForUser(userId: string, tagIds: string[]): Promise<Tag[]> {
+  private async resolveTagsForUser(
+    userId: string,
+    tagIds: string[],
+  ): Promise<Tag[]> {
     if (tagIds.length === 0) return [];
     const tags = await this.tagRepository.find({
       where: { id: In(tagIds), userId },
@@ -143,7 +163,11 @@ export class IncomeService {
       date: income.date,
       source: income.source,
       receiptUrl: income.receiptUrl,
-      tags: (income.tags ?? []).map((t) => ({ id: t.id, name: t.name, color: t.color })),
+      tags: (income.tags ?? []).map((t) => ({
+        id: t.id,
+        name: t.name,
+        color: t.color,
+      })),
       createdAt: income.created_at,
     };
   }

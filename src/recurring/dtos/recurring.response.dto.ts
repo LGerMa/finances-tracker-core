@@ -1,5 +1,8 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IRecurringEntry, IRecurringTag } from '../interfaces/recurring.interface';
+import {
+  IRecurringEntry,
+  IRecurringTag,
+} from '../interfaces/recurring.interface';
 
 export class RecurringTagItem implements IRecurringTag {
   @ApiProperty() id: string;

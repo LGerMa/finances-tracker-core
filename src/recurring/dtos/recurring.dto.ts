@@ -28,12 +28,18 @@ export class CreateRecurringDto {
   @IsOptional()
   description?: string;
 
-  @ApiPropertyOptional({ example: 'credit_card', description: 'Required when entryType is expense' })
+  @ApiPropertyOptional({
+    example: 'credit_card',
+    description: 'Required when entryType is expense',
+  })
   @IsString()
   @IsOptional()
   paymentMethod?: string;
 
-  @ApiPropertyOptional({ example: 'fixed_monthly', description: 'Required when entryType is income' })
+  @ApiPropertyOptional({
+    example: 'fixed_monthly',
+    description: 'Required when entryType is income',
+  })
   @IsString()
   @IsOptional()
   incomeType?: string;
@@ -42,14 +48,20 @@ export class CreateRecurringDto {
   @IsEnum(Frequency)
   frequency: Frequency;
 
-  @ApiPropertyOptional({ example: 15, description: 'Day of month (1-28) for monthly frequency' })
+  @ApiPropertyOptional({
+    example: 15,
+    description: 'Day of month (1-28) for monthly frequency',
+  })
   @IsInt()
   @Min(1)
   @Max(28)
   @IsOptional()
   dayOfMonth?: number;
 
-  @ApiPropertyOptional({ example: 1, description: 'Day of week (0=Sun, 6=Sat) for weekly frequency' })
+  @ApiPropertyOptional({
+    example: 1,
+    description: 'Day of week (0=Sun, 6=Sat) for weekly frequency',
+  })
   @IsInt()
   @Min(0)
   @Max(6)

@@ -47,6 +47,15 @@ export class CreateExpenseDto {
   @IsUUID('4', { each: true })
   @IsOptional()
   tagIds?: string[];
+
+  @ApiPropertyOptional({
+    example: 'a3f1c2d4-5b6e-7f80-9a1b-2c3d4e5f6071',
+    description:
+      'Id of a payment source (card/account alias) to attribute this expense to',
+  })
+  @IsUUID('4')
+  @IsOptional()
+  paymentSourceId?: string;
 }
 
 export class UpdateExpenseDto extends PartialType(CreateExpenseDto) {}

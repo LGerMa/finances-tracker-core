@@ -1,5 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IUserProfile, IUserProfileEmbedded } from '../interfaces/user-profile.interface';
+import {
+  IUserProfile,
+  IUserProfileEmbedded,
+} from '../interfaces/user-profile.interface';
 
 export class UserProfileEmbedded implements IUserProfileEmbedded {
   @ApiProperty({ nullable: true })
