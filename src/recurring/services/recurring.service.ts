@@ -116,20 +116,24 @@ export class RecurringService {
 
   @Cron('5 0 * * *') // daily at 00:05
   async processRecurringEntries(): Promise<void> {
-    const today = new Date().toISOString().split('T')[0];
+    const today = this.formatDate(new Date());
 
     const dueEntries = await this.recurringRepository.find({
       where: { nextDate: LessThanOrEqual(today), isActive: true },
     });
 
     for (const entry of dueEntries) {
+      // Stamp the transaction with the occurrence date the entry is due for,
+      // not the day the job happens to run (which may be later, or a catch-up).
+      const occurrenceDate = entry.nextDate;
+
       if (entry.entryType === 'expense') {
         await this.expensesService.create(entry.userId, {
           amount: Number(entry.amount),
           paymentMethod: (entry.paymentMethod ??
             PaymentMethod.CASH) as PaymentMethod,
           description: entry.description ?? undefined,
-          date: today,
+          date: occurrenceDate,
           source: Source.WEB,
           tagIds: entry.tags?.map((t) => t.id) ?? [],
         });
@@ -138,7 +142,7 @@ export class RecurringService {
           amount: Number(entry.amount),
           type: (entry.incomeType ?? IncomeType.SPORADIC) as IncomeType,
           description: entry.description ?? undefined,
-          date: today,
+          date: occurrenceDate,
           source: Source.WEB,
           tagIds: entry.tags?.map((t) => t.id) ?? [],
         });
@@ -150,7 +154,10 @@ export class RecurringService {
   }
 
   private calculateNextDate(entry: RecurringEntry): string {
-    const current = new Date(entry.nextDate);
+    // Parse as a calendar date (no time / timezone component) so month and day
+    // arithmetic can't slip across a day boundary via UTC conversion.
+    const [year, month, day] = entry.nextDate.split('-').map(Number);
+    const current = new Date(year, month - 1, day);
 
     if (entry.frequency === Frequency.WEEKLY) {
       current.setDate(current.getDate() + 7);
@@ -163,7 +170,14 @@ export class RecurringService {
       }
     }
 
-    return current.toISOString().split('T')[0];
+    return this.formatDate(current);
+  }
+
+  private formatDate(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 
   private async findOwned(
