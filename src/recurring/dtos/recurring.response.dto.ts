@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IRecurringEntry,
+  IRecurringPaymentSource,
   IRecurringTag,
 } from '../interfaces/recurring.interface';
 
@@ -8,6 +9,12 @@ export class RecurringTagItem implements IRecurringTag {
   @ApiProperty() id: string;
   @ApiProperty() name: string;
   @ApiProperty({ example: '#EF4444' }) color: string;
+}
+
+export class RecurringPaymentSourceItem implements IRecurringPaymentSource {
+  @ApiProperty() id: string;
+  @ApiProperty({ example: 'visa 8943' }) alias: string;
+  @ApiProperty({ example: '#3B82F6' }) color: string;
 }
 
 export class RecurringEntryResponse implements IRecurringEntry {
@@ -23,5 +30,10 @@ export class RecurringEntryResponse implements IRecurringEntry {
   @ApiProperty({ example: '2026-05-01' }) nextDate: string;
   @ApiProperty() isActive: boolean;
   @ApiProperty({ type: () => [RecurringTagItem] }) tags: RecurringTagItem[];
+  @ApiPropertyOptional({
+    type: () => RecurringPaymentSourceItem,
+    nullable: true,
+  })
+  paymentSource: RecurringPaymentSourceItem | null;
   @ApiProperty() createdAt: Date;
 }

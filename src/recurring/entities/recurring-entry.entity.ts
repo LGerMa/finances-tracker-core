@@ -9,6 +9,7 @@ import {
 import { AbstractEntity } from '../../common/entities/abstract.entity';
 import { User } from '../../users/entities/user.entity';
 import { Tag } from '../../tags/entities/tag.entity';
+import { PaymentSource } from '../../payment-sources/entities/payment-source.entity';
 import { EntryType, Frequency } from '../enums/recurring.enum';
 
 @Entity('recurring_entries')
@@ -36,6 +37,9 @@ export class RecurringEntry extends AbstractEntity {
   @Column({ name: 'income_type', type: 'varchar', length: 50, nullable: true })
   incomeType: string | null;
 
+  @Column({ name: 'payment_source_id', type: 'uuid', nullable: true })
+  paymentSourceId: string | null;
+
   @Column({ type: 'varchar', length: 20 })
   frequency: Frequency;
 
@@ -54,6 +58,14 @@ export class RecurringEntry extends AbstractEntity {
   @ManyToOne(() => User, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id' })
   user: User;
+
+  @ManyToOne(() => PaymentSource, {
+    onDelete: 'SET NULL',
+    nullable: true,
+    eager: true,
+  })
+  @JoinColumn({ name: 'payment_source_id' })
+  paymentSource: PaymentSource | null;
 
   @ManyToMany(() => Tag, { eager: true })
   @JoinTable({

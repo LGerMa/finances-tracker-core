@@ -4,6 +4,12 @@ export interface IRecurringTag {
   color: string;
 }
 
+export interface IRecurringPaymentSource {
+  id: string;
+  alias: string;
+  color: string;
+}
+
 export interface IRecurringEntry {
   id: string;
   entryType: string;
@@ -17,5 +23,6 @@ export interface IRecurringEntry {
   nextDate: string;
   isActive: boolean;
   tags: IRecurringTag[];
+  paymentSource: IRecurringPaymentSource | null;
   createdAt: Date;
 }

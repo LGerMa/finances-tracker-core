@@ -1,3 +1,4 @@
+import { BadRequestException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { RecurringService } from '../services/recurring.service';
@@ -5,6 +6,8 @@ import { RecurringEntry } from '../entities/recurring-entry.entity';
 import { Tag } from '../../tags/entities/tag.entity';
 import { ExpensesService } from '../../expenses/services/expenses.service';
 import { IncomeService } from '../../income/services/income.service';
+import { PaymentSourceService } from '../../payment-sources/services/payment-sources.service';
+import { CreateRecurringDto } from '../dtos/recurring.dto';
 import { EntryType, Frequency } from '../enums/recurring.enum';
 import { PaymentMethod } from '../../expenses/enums/expense.enum';
 import { IncomeType } from '../../income/enums/income.enum';
@@ -54,11 +57,13 @@ describe('RecurringService', () => {
   let recurringRepo: MockRepo;
   let expensesService: { create: jest.Mock };
   let incomeService: { create: jest.Mock };
+  let paymentSourceService: { findOwnedEntity: jest.Mock };
 
   beforeEach(async () => {
     recurringRepo = makeRepo();
     expensesService = { create: jest.fn() };
     incomeService = { create: jest.fn() };
+    paymentSourceService = { findOwnedEntity: jest.fn() };
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -70,6 +75,7 @@ describe('RecurringService', () => {
         { provide: getRepositoryToken(Tag), useValue: makeRepo() },
         { provide: ExpensesService, useValue: expensesService },
         { provide: IncomeService, useValue: incomeService },
+        { provide: PaymentSourceService, useValue: paymentSourceService },
       ],
     }).compile();
     service = module.get(RecurringService);
@@ -123,6 +129,72 @@ describe('RecurringService', () => {
 
       expect(e.nextDate).toBe('2026-10-06');
       expect(recurringRepo.save).toHaveBeenCalledWith(e);
+    });
+
+    it('forwards the entry payment source to the created expense', async () => {
+      recurringRepo.find.mockResolvedValue([
+        entry({ paymentSourceId: 'ps-1' }),
+      ]);
+
+      await service.processRecurringEntries();
+
+      expect(expensesService.create).toHaveBeenCalledWith(
+        USER_ID,
+        expect.objectContaining({ paymentSourceId: 'ps-1' }),
+      );
+    });
+
+    it('passes undefined payment source when the entry has none', async () => {
+      recurringRepo.find.mockResolvedValue([entry({ paymentSourceId: null })]);
+
+      await service.processRecurringEntries();
+
+      expect(expensesService.create).toHaveBeenCalledWith(
+        USER_ID,
+        expect.objectContaining({ paymentSourceId: undefined }),
+      );
+    });
+  });
+
+  describe('create', () => {
+    const dto: CreateRecurringDto = {
+      entryType: EntryType.EXPENSE,
+      amount: 6.99,
+      frequency: Frequency.MONTHLY,
+      nextDate: '2026-09-06',
+      paymentSourceId: 'ps-1',
+    };
+
+    it('validates payment source ownership and persists the id', async () => {
+      paymentSourceService.findOwnedEntity.mockResolvedValue({
+        id: 'ps-1',
+        alias: 'visa 8943',
+        color: '#3B82F6',
+      });
+
+      const result = await service.create(USER_ID, dto);
+
+      expect(paymentSourceService.findOwnedEntity).toHaveBeenCalledWith(
+        USER_ID,
+        'ps-1',
+      );
+      expect(recurringRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({ paymentSourceId: 'ps-1' }),
+      );
+      expect(result.paymentSource).toEqual({
+        id: 'ps-1',
+        alias: 'visa 8943',
+        color: '#3B82F6',
+      });
+    });
+
+    it('rejects a payment source that does not belong to the user', async () => {
+      paymentSourceService.findOwnedEntity.mockRejectedValue(new Error('nope'));
+
+      await expect(service.create(USER_ID, dto)).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
+      expect(recurringRepo.save).not.toHaveBeenCalled();
     });
   });
 });
