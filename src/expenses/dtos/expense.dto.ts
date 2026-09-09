@@ -10,7 +10,7 @@ import {
   IsUrl,
   Min,
 } from 'class-validator';
-import { PaymentMethod } from '../enums/expense.enum';
+import { PaymentMethod, ExpenseType } from '../enums/expense.enum';
 import { Source } from '../../common/enums/source.enum';
 
 export class CreateExpenseDto {
@@ -22,6 +22,11 @@ export class CreateExpenseDto {
   @ApiProperty({ enum: PaymentMethod, example: PaymentMethod.CASH })
   @IsEnum(PaymentMethod)
   paymentMethod: PaymentMethod;
+
+  @ApiPropertyOptional({ enum: ExpenseType, default: ExpenseType.VARIABLE })
+  @IsEnum(ExpenseType)
+  @IsOptional()
+  type?: ExpenseType;
 
   @ApiPropertyOptional({ example: 'Lunch at restaurant' })
   @IsString()

@@ -44,6 +44,15 @@ export class CreateRecurringDto {
   @IsOptional()
   incomeType?: string;
 
+  @ApiPropertyOptional({
+    example: 'uuid-1',
+    description:
+      'Payment source to charge generated expenses to (expense only)',
+  })
+  @IsUUID('4')
+  @IsOptional()
+  paymentSourceId?: string;
+
   @ApiProperty({ enum: Frequency, example: Frequency.MONTHLY })
   @IsEnum(Frequency)
   frequency: Frequency;

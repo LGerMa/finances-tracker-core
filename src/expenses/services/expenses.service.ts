@@ -10,6 +10,7 @@ import { Tag } from '../../tags/entities/tag.entity';
 import { PaymentSource } from '../../payment-sources/entities/payment-source.entity';
 import { PaymentSourceService } from '../../payment-sources/services/payment-sources.service';
 import { CreateExpenseDto, UpdateExpenseDto } from '../dtos/expense.dto';
+import { ExpenseType } from '../enums/expense.enum';
 import { ExpenseQueryDto } from '../dtos/expense-query.dto';
 import { IExpense } from '../interfaces/expense.interface';
 import { PageDto } from '../../common/dtos/page.dto';
@@ -56,6 +57,9 @@ export class ExpensesService {
       qb.andWhere('expense.paymentSourceId = :paymentSourceId', {
         paymentSourceId: queryDto.paymentSourceId,
       });
+    }
+    if (queryDto.type) {
+      qb.andWhere('expense.type = :type', { type: queryDto.type });
     }
     if (queryDto.tags) {
       const tagNames = queryDto.tags
@@ -107,6 +111,7 @@ export class ExpensesService {
       userId,
       amount: dto.amount,
       paymentMethod: dto.paymentMethod,
+      type: dto.type ?? ExpenseType.VARIABLE,
       description: dto.description ?? null,
       date: dto.date,
       source: dto.source,
@@ -139,6 +144,7 @@ export class ExpensesService {
     if (dto.amount !== undefined) expense.amount = dto.amount;
     if (dto.paymentMethod !== undefined)
       expense.paymentMethod = dto.paymentMethod;
+    if (dto.type !== undefined) expense.type = dto.type;
     if (dto.description !== undefined)
       expense.description = dto.description ?? null;
     if (dto.date !== undefined) expense.date = dto.date;
@@ -202,6 +208,7 @@ export class ExpensesService {
       id: expense.id,
       amount: parseFloat(expense.amount as any),
       paymentMethod: expense.paymentMethod,
+      type: expense.type,
       description: expense.description,
       date: expense.date,
       source: expense.source,

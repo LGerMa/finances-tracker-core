@@ -73,3 +73,14 @@ export class TrendsQueryDto {
   @Max(24)
   months?: number;
 }
+
+export class BudgetRuleQueryDto {
+  @ApiPropertyOptional({
+    description: 'Month in YYYY-MM format',
+    example: '2026-03',
+  })
+  @IsOptional()
+  @IsString()
+  @Matches(/^\d{4}-\d{2}$/, { message: 'month must be in YYYY-MM format' })
+  month?: string;
+}

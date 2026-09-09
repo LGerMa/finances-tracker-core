@@ -14,6 +14,7 @@ export interface IExpense {
   id: string;
   amount: number;
   paymentMethod: string;
+  type: string;
   description: string | null;
   date: string;
   source: string;

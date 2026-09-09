@@ -42,3 +42,30 @@ export interface ITrendItem {
   totalIncome: number;
   totalExpenses: number;
 }
+
+export type RuleStatusLevel = 'normal' | 'warning' | 'over';
+export type RuleBucketName = 'needs' | 'wants' | 'savings';
+
+export interface IBudgetRuleBreakdown {
+  fixed: number;
+  variable: number;
+  unplanned: number;
+  planned: number;
+  saving: number;
+}
+
+export interface IBudgetRuleBucket {
+  bucket: RuleBucketName;
+  spent: number;
+  target: number;
+  targetPct: number;
+  percentage: number;
+  status: RuleStatusLevel;
+}
+
+export interface IBudgetRule {
+  month: string;
+  income: number;
+  breakdown: IBudgetRuleBreakdown;
+  rule: IBudgetRuleBucket[];
+}

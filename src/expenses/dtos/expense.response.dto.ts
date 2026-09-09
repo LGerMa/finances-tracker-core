@@ -4,7 +4,7 @@ import {
   IExpenseTag,
   IExpensePaymentSource,
 } from '../interfaces/expense.interface';
-import { PaymentMethod } from '../enums/expense.enum';
+import { PaymentMethod, ExpenseType } from '../enums/expense.enum';
 import { Source } from '../../common/enums/source.enum';
 
 export class ExpenseTagItem implements IExpenseTag {
@@ -23,6 +23,7 @@ export class ExpenseResponse implements IExpense {
   @ApiProperty() id: string;
   @ApiProperty() amount: number;
   @ApiProperty({ enum: PaymentMethod }) paymentMethod: string;
+  @ApiProperty({ enum: ExpenseType }) type: string;
   @ApiProperty({ nullable: true }) description: string | null;
   @ApiProperty({ example: '2026-03-28' }) date: string;
   @ApiProperty({ enum: Source }) source: string;

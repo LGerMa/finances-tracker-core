@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, LessThanOrEqual, Repository } from 'typeorm';
@@ -6,10 +10,12 @@ import { RecurringEntry } from '../entities/recurring-entry.entity';
 import { Tag } from '../../tags/entities/tag.entity';
 import { CreateRecurringDto, UpdateRecurringDto } from '../dtos/recurring.dto';
 import { IRecurringEntry } from '../interfaces/recurring.interface';
-import { Frequency } from '../enums/recurring.enum';
+import { EntryType, Frequency } from '../enums/recurring.enum';
 import { ExpensesService } from '../../expenses/services/expenses.service';
 import { IncomeService } from '../../income/services/income.service';
-import { PaymentMethod } from '../../expenses/enums/expense.enum';
+import { PaymentSource } from '../../payment-sources/entities/payment-source.entity';
+import { PaymentSourceService } from '../../payment-sources/services/payment-sources.service';
+import { PaymentMethod, ExpenseType } from '../../expenses/enums/expense.enum';
 import { IncomeType } from '../../income/enums/income.enum';
 import { Source } from '../../common/enums/source.enum';
 
@@ -22,6 +28,7 @@ export class RecurringService {
     private readonly tagRepository: Repository<Tag>,
     private readonly expensesService: ExpensesService,
     private readonly incomeService: IncomeService,
+    private readonly paymentSourceService: PaymentSourceService,
   ) {}
 
   async findAll(userId: string): Promise<IRecurringEntry[]> {
@@ -42,6 +49,11 @@ export class RecurringService {
         })
       : [];
 
+    const paymentSource = await this.resolvePaymentSource(
+      userId,
+      dto.paymentSourceId,
+    );
+
     const entry = this.recurringRepository.create({
       userId,
       entryType: dto.entryType,
@@ -49,6 +61,8 @@ export class RecurringService {
       description: dto.description ?? null,
       paymentMethod: dto.paymentMethod ?? null,
       incomeType: dto.incomeType ?? null,
+      paymentSource,
+      paymentSourceId: paymentSource ? paymentSource.id : null,
       frequency: dto.frequency,
       dayOfMonth: dto.dayOfMonth ?? null,
       dayOfWeek: dto.dayOfWeek ?? null,
@@ -74,6 +88,15 @@ export class RecurringService {
             where: { id: In(dto.tagIds), userId },
           })
         : [];
+    }
+
+    if (dto.paymentSourceId !== undefined) {
+      const source = await this.resolvePaymentSource(
+        userId,
+        dto.paymentSourceId,
+      );
+      entry.paymentSource = source;
+      entry.paymentSourceId = source ? source.id : null;
     }
 
     Object.assign(entry, {
@@ -116,21 +139,27 @@ export class RecurringService {
 
   @Cron('5 0 * * *') // daily at 00:05
   async processRecurringEntries(): Promise<void> {
-    const today = new Date().toISOString().split('T')[0];
+    const today = this.formatDate(new Date());
 
     const dueEntries = await this.recurringRepository.find({
       where: { nextDate: LessThanOrEqual(today), isActive: true },
     });
 
     for (const entry of dueEntries) {
-      if (entry.entryType === 'expense') {
+      // Stamp the transaction with the occurrence date the entry is due for,
+      // not the day the job happens to run (which may be later, or a catch-up).
+      const occurrenceDate = entry.nextDate;
+
+      if (entry.entryType === EntryType.EXPENSE) {
         await this.expensesService.create(entry.userId, {
           amount: Number(entry.amount),
           paymentMethod: (entry.paymentMethod ??
             PaymentMethod.CASH) as PaymentMethod,
+          paymentSourceId: entry.paymentSourceId ?? undefined,
           description: entry.description ?? undefined,
-          date: today,
+          date: occurrenceDate,
           source: Source.WEB,
+          type: ExpenseType.FIXED,
           tagIds: entry.tags?.map((t) => t.id) ?? [],
         });
       } else {
@@ -138,7 +167,7 @@ export class RecurringService {
           amount: Number(entry.amount),
           type: (entry.incomeType ?? IncomeType.SPORADIC) as IncomeType,
           description: entry.description ?? undefined,
-          date: today,
+          date: occurrenceDate,
           source: Source.WEB,
           tagIds: entry.tags?.map((t) => t.id) ?? [],
         });
@@ -150,7 +179,10 @@ export class RecurringService {
   }
 
   private calculateNextDate(entry: RecurringEntry): string {
-    const current = new Date(entry.nextDate);
+    // Parse as a calendar date (no time / timezone component) so month and day
+    // arithmetic can't slip across a day boundary via UTC conversion.
+    const [year, month, day] = entry.nextDate.split('-').map(Number);
+    const current = new Date(year, month - 1, day);
 
     if (entry.frequency === Frequency.WEEKLY) {
       current.setDate(current.getDate() + 7);
@@ -163,7 +195,14 @@ export class RecurringService {
       }
     }
 
-    return current.toISOString().split('T')[0];
+    return this.formatDate(current);
+  }
+
+  private formatDate(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 
   private async findOwned(
@@ -194,6 +233,30 @@ export class RecurringService {
       name: t.name,
       color: t.color,
     })),
+    paymentSource: entry.paymentSource
+      ? {
+          id: entry.paymentSource.id,
+          alias: entry.paymentSource.alias,
+          color: entry.paymentSource.color,
+        }
+      : null,
     createdAt: entry.created_at,
   });
+
+  private async resolvePaymentSource(
+    userId: string,
+    paymentSourceId: string | null | undefined,
+  ): Promise<PaymentSource | null> {
+    if (!paymentSourceId) return null;
+    try {
+      return await this.paymentSourceService.findOwnedEntity(
+        userId,
+        paymentSourceId,
+      );
+    } catch {
+      throw new BadRequestException(
+        'paymentSourceId is invalid or does not belong to you',
+      );
+    }
+  }
 }

@@ -7,6 +7,11 @@ import {
   ITagBreakdownItem,
   ITagBreakdownTag,
   ITrendItem,
+  IBudgetRule,
+  IBudgetRuleBreakdown,
+  IBudgetRuleBucket,
+  RuleBucketName,
+  RuleStatusLevel,
 } from '../interfaces/dashboard.interface';
 
 export class DashboardSummaryResponse implements IDashboardSummary {
@@ -63,4 +68,32 @@ export class TrendItemResponse implements ITrendItem {
   @ApiProperty({ example: '2026-03' }) month: string;
   @ApiProperty() totalIncome: number;
   @ApiProperty() totalExpenses: number;
+}
+
+export class BudgetRuleBreakdownDto implements IBudgetRuleBreakdown {
+  @ApiProperty() fixed: number;
+  @ApiProperty() variable: number;
+  @ApiProperty() unplanned: number;
+  @ApiProperty() planned: number;
+  @ApiProperty() saving: number;
+}
+
+export class BudgetRuleBucketDto implements IBudgetRuleBucket {
+  @ApiProperty({ enum: ['needs', 'wants', 'savings'] })
+  bucket: RuleBucketName;
+  @ApiProperty() spent: number;
+  @ApiProperty() target: number;
+  @ApiProperty({ example: 50 }) targetPct: number;
+  @ApiProperty({ example: 115 }) percentage: number;
+  @ApiProperty({ enum: ['normal', 'warning', 'over'] })
+  status: RuleStatusLevel;
+}
+
+export class BudgetRuleResponse implements IBudgetRule {
+  @ApiProperty({ example: '2026-09' }) month: string;
+  @ApiProperty() income: number;
+  @ApiProperty({ type: () => BudgetRuleBreakdownDto })
+  breakdown: BudgetRuleBreakdownDto;
+  @ApiProperty({ type: () => [BudgetRuleBucketDto] })
+  rule: BudgetRuleBucketDto[];
 }

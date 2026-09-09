@@ -33,6 +33,7 @@
     "@nestjs/core": "^11.1.16",
     "@nestjs/jwt": "^11.0.2",
     "@nestjs/platform-express": "^11.1.16",
+    "@nestjs/schedule": "^6.1.1",
     "@nestjs/swagger": "^11.2.6",
     "@nestjs/typeorm": "^11.0.0",
     "bcrypt": "^6.0.0",

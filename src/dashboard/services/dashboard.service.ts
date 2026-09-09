@@ -5,6 +5,7 @@ import { Expense } from '../../expenses/entities/expense.entity';
 import { Income } from '../../income/entities/income.entity';
 import { Tag } from '../../tags/entities/tag.entity';
 import {
+  BudgetRuleQueryDto,
   ByTagsQueryDto,
   CompareTagsQueryDto,
   SummaryQueryDto,
@@ -16,6 +17,11 @@ import {
   IDashboardSummary,
   ITagBreakdownItem,
   ITrendItem,
+  IBudgetRule,
+  IBudgetRuleBreakdown,
+  IBudgetRuleBucket,
+  RuleBucketName,
+  RuleStatusLevel,
 } from '../interfaces/dashboard.interface';
 
 @Injectable()
@@ -61,6 +67,76 @@ export class DashboardService {
       expenseCount: parseInt(expenseResult.count, 10),
       incomeCount: parseInt(incomeResult.count, 10),
     };
+  }
+
+  async budgetRule(
+    userId: string,
+    queryDto: BudgetRuleQueryDto,
+  ): Promise<IBudgetRule> {
+    const month = queryDto.month ?? this.currentMonth();
+    const { startDate, endDate } = this.monthToDateRange(month);
+
+    const typeRows: Array<{ type: string; total: string }> =
+      await this.expenseRepository.query(
+        `SELECT type, COALESCE(SUM(amount), 0) AS total
+         FROM expenses
+         WHERE user_id = $1 AND date >= $2 AND date < $3
+         GROUP BY type`,
+        [userId, startDate, endDate],
+      );
+
+    const [incomeResult] = await this.incomeRepository.query(
+      `SELECT COALESCE(SUM(amount), 0) as total, COUNT(*) as count
+       FROM income
+       WHERE user_id = $1 AND date >= $2 AND date < $3`,
+      [userId, startDate, endDate],
+    );
+
+    const round2 = (n: number) => Math.round(n * 100) / 100;
+
+    const breakdown: IBudgetRuleBreakdown = {
+      fixed: 0,
+      variable: 0,
+      unplanned: 0,
+      planned: 0,
+      saving: 0,
+    };
+    for (const row of typeRows) {
+      if (row.type in breakdown) {
+        breakdown[row.type as keyof IBudgetRuleBreakdown] = round2(
+          parseFloat(row.total),
+        );
+      }
+    }
+
+    const income = round2(parseFloat(incomeResult.total));
+
+    const spentByBucket: Record<RuleBucketName, number> = {
+      needs: round2(breakdown.fixed + breakdown.variable),
+      wants: round2(breakdown.planned),
+      savings: round2(breakdown.saving - breakdown.unplanned),
+    };
+
+    const targetPctByBucket: Record<RuleBucketName, number> = {
+      needs: 50,
+      wants: 30,
+      savings: 20,
+    };
+
+    const rule: IBudgetRuleBucket[] = (
+      ['needs', 'wants', 'savings'] as RuleBucketName[]
+    ).map((bucket) => {
+      const targetPct = targetPctByBucket[bucket];
+      const spent = spentByBucket[bucket];
+      const target = round2((income * targetPct) / 100);
+      const percentage =
+        income > 0 && target > 0 ? Math.round((spent / target) * 100) : 0;
+      const status: RuleStatusLevel =
+        percentage >= 100 ? 'over' : percentage >= 75 ? 'warning' : 'normal';
+      return { bucket, spent, target, targetPct, percentage, status };
+    });
+
+    return { month, income, breakdown, rule };
   }
 
   async byTags(
