@@ -8,12 +8,14 @@ import {
 import { CurrentUser } from '@lgerma/nestjs-doorkeeper';
 import { DashboardService } from '../services/dashboard.service';
 import {
+  BudgetRuleQueryDto,
   ByTagsQueryDto,
   CompareTagsQueryDto,
   SummaryQueryDto,
   TrendsQueryDto,
 } from '../dtos/dashboard-query.dto';
 import {
+  BudgetRuleResponse,
   CompareTagsResponse,
   DashboardSummaryResponse,
   TagBreakdownItemResponse,
@@ -34,6 +36,18 @@ export class DashboardController {
     @Query() queryDto: SummaryQueryDto,
   ): Promise<DashboardSummaryResponse> {
     return this.dashboardService.summary(user.id, queryDto);
+  }
+
+  @Get('budget-rule')
+  @ApiOperation({
+    summary: '50/30/20 needs/wants/savings breakdown for a month',
+  })
+  @ApiOkResponse({ type: BudgetRuleResponse })
+  budgetRule(
+    @CurrentUser() user: { id: string },
+    @Query() queryDto: BudgetRuleQueryDto,
+  ): Promise<BudgetRuleResponse> {
+    return this.dashboardService.budgetRule(user.id, queryDto);
   }
 
   @Get('by-tags')

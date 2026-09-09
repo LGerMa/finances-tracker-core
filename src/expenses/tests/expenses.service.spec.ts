@@ -5,6 +5,7 @@ import { Expense } from '../entities/expense.entity';
 import { Tag } from '../../tags/entities/tag.entity';
 import { ExpensesService } from '../services/expenses.service';
 import { PaymentSourceService } from '../../payment-sources/services/payment-sources.service';
+import { ExpenseType } from '../enums/expense.enum';
 
 const USER_ID = 'user-1';
 
@@ -201,6 +202,73 @@ describe('ExpensesService — payment source', () => {
         alias: 'visa 8943',
         color: '#3B82F6',
       });
+    });
+  });
+
+  describe('type classification', () => {
+    it('defaults type to VARIABLE when not provided on create', async () => {
+      await service.create(USER_ID, {
+        amount: 10,
+        paymentMethod: 'cash',
+        date: '2026-09-01',
+      } as any);
+      expect(expenseRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({ type: ExpenseType.VARIABLE }),
+      );
+    });
+
+    it('uses the provided type on create', async () => {
+      await service.create(USER_ID, {
+        amount: 10,
+        paymentMethod: 'cash',
+        date: '2026-09-01',
+        type: ExpenseType.PLANNED,
+      } as any);
+      expect(expenseRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({ type: ExpenseType.PLANNED }),
+      );
+    });
+
+    it('updates type when dto.type is present', async () => {
+      expenseRepo.findOne.mockResolvedValue({
+        id: 'exp-1',
+        userId: USER_ID,
+        type: ExpenseType.VARIABLE,
+        tags: [],
+        paymentSource: null,
+      });
+      await service.update(USER_ID, 'exp-1', {
+        type: ExpenseType.FIXED,
+      } as any);
+      expect(expenseRepo.save).toHaveBeenCalledWith(
+        expect.objectContaining({ type: ExpenseType.FIXED }),
+      );
+    });
+
+    it('adds a type andWhere when the filter is present', async () => {
+      await service.findAll(USER_ID, { type: ExpenseType.FIXED } as any);
+      expect(qb.andWhere).toHaveBeenCalledWith('expense.type = :type', {
+        type: ExpenseType.FIXED,
+      });
+    });
+
+    it('returns type from toExpense (via findOne)', async () => {
+      expenseRepo.findOne.mockResolvedValue({
+        id: 'exp-1',
+        userId: USER_ID,
+        amount: '10.00',
+        paymentMethod: 'cash',
+        description: null,
+        date: '2026-09-01',
+        source: 'web',
+        receiptUrl: null,
+        type: ExpenseType.SAVING,
+        tags: [],
+        paymentSource: null,
+        created_at: new Date(),
+      });
+      const result = await service.findOne(USER_ID, 'exp-1');
+      expect(result.type).toBe(ExpenseType.SAVING);
     });
   });
 });

@@ -7,7 +7,7 @@ import {
   IsUUID,
 } from 'class-validator';
 import { PageOptionsDto } from '../../common/dtos/page-options.dto';
-import { PaymentMethod } from '../enums/expense.enum';
+import { PaymentMethod, ExpenseType } from '../enums/expense.enum';
 
 export class ExpenseQueryDto extends PageOptionsDto {
   @ApiPropertyOptional({ example: '2026-03-01' })
@@ -33,6 +33,11 @@ export class ExpenseQueryDto extends PageOptionsDto {
   @IsEnum(PaymentMethod)
   @IsOptional()
   paymentMethod?: PaymentMethod;
+
+  @ApiPropertyOptional({ enum: ExpenseType })
+  @IsEnum(ExpenseType)
+  @IsOptional()
+  type?: ExpenseType;
 
   @ApiPropertyOptional({
     example: 'a3f1c2d4-5b6e-7f80-9a1b-2c3d4e5f6071',

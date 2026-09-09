@@ -15,7 +15,7 @@ import { ExpensesService } from '../../expenses/services/expenses.service';
 import { IncomeService } from '../../income/services/income.service';
 import { PaymentSource } from '../../payment-sources/entities/payment-source.entity';
 import { PaymentSourceService } from '../../payment-sources/services/payment-sources.service';
-import { PaymentMethod } from '../../expenses/enums/expense.enum';
+import { PaymentMethod, ExpenseType } from '../../expenses/enums/expense.enum';
 import { IncomeType } from '../../income/enums/income.enum';
 import { Source } from '../../common/enums/source.enum';
 
@@ -159,6 +159,7 @@ export class RecurringService {
           description: entry.description ?? undefined,
           date: occurrenceDate,
           source: Source.WEB,
+          type: ExpenseType.FIXED,
           tagIds: entry.tags?.map((t) => t.id) ?? [],
         });
       } else {

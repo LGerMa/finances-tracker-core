@@ -9,7 +9,7 @@ import { IncomeService } from '../../income/services/income.service';
 import { PaymentSourceService } from '../../payment-sources/services/payment-sources.service';
 import { CreateRecurringDto } from '../dtos/recurring.dto';
 import { EntryType, Frequency } from '../enums/recurring.enum';
-import { PaymentMethod } from '../../expenses/enums/expense.enum';
+import { PaymentMethod, ExpenseType } from '../../expenses/enums/expense.enum';
 import { IncomeType } from '../../income/enums/income.enum';
 import { Source } from '../../common/enums/source.enum';
 
@@ -97,6 +97,17 @@ describe('RecurringService', () => {
           source: Source.WEB,
           tagIds: [],
         }),
+      );
+    });
+
+    it('stamps the created expense with type FIXED', async () => {
+      recurringRepo.find.mockResolvedValue([entry()]);
+
+      await service.processRecurringEntries();
+
+      expect(expensesService.create).toHaveBeenCalledWith(
+        USER_ID,
+        expect.objectContaining({ type: ExpenseType.FIXED }),
       );
     });
 

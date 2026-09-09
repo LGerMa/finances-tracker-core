@@ -10,7 +10,7 @@ import { AbstractEntity } from '../../common/entities/abstract.entity';
 import { User } from '../../users/entities/user.entity';
 import { Tag } from '../../tags/entities/tag.entity';
 import { PaymentSource } from '../../payment-sources/entities/payment-source.entity';
-import { PaymentMethod } from '../enums/expense.enum';
+import { PaymentMethod, ExpenseType } from '../enums/expense.enum';
 import { Source } from '../../common/enums/source.enum';
 
 @Entity('expenses')
@@ -23,6 +23,14 @@ export class Expense extends AbstractEntity {
 
   @Column({ name: 'payment_method', type: 'varchar', length: 50 })
   paymentMethod: PaymentMethod;
+
+  @Column({
+    name: 'type',
+    type: 'varchar',
+    length: 20,
+    default: ExpenseType.VARIABLE,
+  })
+  type: ExpenseType;
 
   @Column({ type: 'text', nullable: true })
   description: string | null;
