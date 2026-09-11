@@ -1,3 +1,5 @@
+import { IExpense } from '../../expenses/interfaces/expense.interface';
+
 export interface IDashboardSummary {
   month: string;
   totalIncome: number;
@@ -68,4 +70,18 @@ export interface IBudgetRule {
   income: number;
   breakdown: IBudgetRuleBreakdown;
   rule: IBudgetRuleBucket[];
+}
+
+export interface IBudgetRuleTransactions {
+  bucket: RuleBucketName;
+  month: string;
+  items: IExpense[];
+  meta: {
+    page: number;
+    take: number;
+    itemCount: number;
+    pageCount: number;
+    hasPreviousPage: boolean;
+    hasNextPage: boolean;
+  };
 }

@@ -151,3 +151,137 @@ describe('DashboardService.budgetRule', () => {
     expect(res.month).toMatch(/^\d{4}-\d{2}$/);
   });
 });
+
+describe('DashboardService.budgetRuleTransactions', () => {
+  const makeQbRepo = (items: any[], itemCount: number) => {
+    const qb = {
+      where: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      leftJoinAndSelect: jest.fn().mockReturnThis(),
+      orderBy: jest.fn().mockReturnThis(),
+      addOrderBy: jest.fn().mockReturnThis(),
+      skip: jest.fn().mockReturnThis(),
+      take: jest.fn().mockReturnThis(),
+      getCount: jest.fn(async () => itemCount),
+      getMany: jest.fn(async () => items),
+    };
+    const expenseRepository = {
+      createQueryBuilder: jest.fn(() => qb),
+    };
+    return { expenseRepository, qb };
+  };
+
+  const buildWithQb = async (expenseRepository: any) => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        DashboardService,
+        { provide: getRepositoryToken(Expense), useValue: expenseRepository },
+        { provide: getRepositoryToken(Income), useValue: {} },
+        { provide: getRepositoryToken(Tag), useValue: {} },
+      ],
+    }).compile();
+    return module.get(DashboardService);
+  };
+
+  const makeExpenseRow = (type: string) => ({
+    id: 'e1',
+    amount: '10.00',
+    paymentMethod: 'cash',
+    type,
+    description: null,
+    date: '2026-09-05',
+    source: 'manual',
+    receiptUrl: null,
+    tags: [],
+    paymentSource: null,
+    created_at: new Date('2026-09-05'),
+  });
+
+  it('filters by type IN (fixed, variable) for the needs bucket', async () => {
+    const { expenseRepository, qb } = makeQbRepo(
+      [makeExpenseRow('fixed'), makeExpenseRow('variable')],
+      2,
+    );
+    const service = await buildWithQb(expenseRepository);
+
+    const res = await service.budgetRuleTransactions(USER_ID, {
+      month: '2026-09',
+      bucket: 'needs',
+    } as any);
+
+    expect(qb.andWhere).toHaveBeenCalledWith('expense.type IN (:...types)', {
+      types: ['fixed', 'variable'],
+    });
+    expect(res.bucket).toBe('needs');
+    expect(res.items).toHaveLength(2);
+  });
+
+  it('filters by type = planned for the wants bucket', async () => {
+    const { expenseRepository, qb } = makeQbRepo(
+      [makeExpenseRow('planned')],
+      1,
+    );
+    const service = await buildWithQb(expenseRepository);
+
+    await service.budgetRuleTransactions(USER_ID, {
+      month: '2026-09',
+      bucket: 'wants',
+    } as any);
+
+    expect(qb.andWhere).toHaveBeenCalledWith('expense.type IN (:...types)', {
+      types: ['planned'],
+    });
+  });
+
+  it('filters by type IN (saving, unplanned) for the savings bucket, undifferentiated by sign', async () => {
+    const { expenseRepository, qb } = makeQbRepo(
+      [makeExpenseRow('saving'), makeExpenseRow('unplanned')],
+      2,
+    );
+    const service = await buildWithQb(expenseRepository);
+
+    const res = await service.budgetRuleTransactions(USER_ID, {
+      month: '2026-09',
+      bucket: 'savings',
+    } as any);
+
+    expect(qb.andWhere).toHaveBeenCalledWith('expense.type IN (:...types)', {
+      types: ['saving', 'unplanned'],
+    });
+    expect(res.items.map((i) => i.type)).toEqual(['saving', 'unplanned']);
+  });
+
+  it('paginates using PageOptionsDto/PageMetaDto conventions', async () => {
+    const { expenseRepository, qb } = makeQbRepo([makeExpenseRow('fixed')], 21);
+    const service = await buildWithQb(expenseRepository);
+
+    const res = await service.budgetRuleTransactions(USER_ID, {
+      month: '2026-09',
+      bucket: 'needs',
+      page: 2,
+      take: 10,
+    } as any);
+
+    expect(qb.skip).toHaveBeenCalledWith(10);
+    expect(qb.take).toHaveBeenCalledWith(10);
+    expect(res.meta).toEqual({
+      page: 2,
+      take: 10,
+      itemCount: 21,
+      pageCount: 3,
+      hasPreviousPage: true,
+      hasNextPage: true,
+    });
+  });
+
+  it('defaults month to the current month when omitted', async () => {
+    const { expenseRepository } = makeQbRepo([], 0);
+    const service = await buildWithQb(expenseRepository);
+
+    const res = await service.budgetRuleTransactions(USER_ID, {
+      bucket: 'needs',
+    } as any);
+
+    expect(res.month).toMatch(/^\d{4}-\d{2}$/);
+  });
+});

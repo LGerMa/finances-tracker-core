@@ -4,8 +4,12 @@ import { Repository } from 'typeorm';
 import { Expense } from '../../expenses/entities/expense.entity';
 import { Income } from '../../income/entities/income.entity';
 import { Tag } from '../../tags/entities/tag.entity';
+import { PageMetaDto } from '../../common/dtos/page-meta.dto';
+import { PageOptionsDto } from '../../common/dtos/page-options.dto';
+import { IExpense } from '../../expenses/interfaces/expense.interface';
 import {
   BudgetRuleQueryDto,
+  BudgetRuleTransactionsQueryDto,
   ByTagsQueryDto,
   CompareTagsQueryDto,
   SummaryQueryDto,
@@ -14,6 +18,7 @@ import {
 import {
   ICompareTags,
   ICompareTagItem,
+  IBudgetRuleTransactions,
   IDashboardSummary,
   ITagBreakdownItem,
   ITrendItem,
@@ -137,6 +142,85 @@ export class DashboardService {
     });
 
     return { month, income, breakdown, rule };
+  }
+
+  private static readonly BUCKET_TYPES: Record<RuleBucketName, string[]> = {
+    needs: ['fixed', 'variable'],
+    wants: ['planned'],
+    savings: ['saving', 'unplanned'],
+  };
+
+  async budgetRuleTransactions(
+    userId: string,
+    queryDto: BudgetRuleTransactionsQueryDto,
+  ): Promise<IBudgetRuleTransactions> {
+    const month = queryDto.month ?? this.currentMonth();
+    const { startDate, endDate } = this.monthToDateRange(month);
+    const types = DashboardService.BUCKET_TYPES[queryDto.bucket];
+
+    const page = queryDto.page ?? 1;
+    const take = queryDto.take ?? 10;
+    const pageOptionsDto = new PageOptionsDto(page, take);
+
+    const qb = this.expenseRepository
+      .createQueryBuilder('expense')
+      .where('expense.userId = :userId', { userId })
+      .andWhere('expense.date >= :startDate', { startDate })
+      .andWhere('expense.date < :endDate', { endDate })
+      .andWhere('expense.type IN (:...types)', { types });
+
+    const itemCount = await qb.getCount();
+
+    const rows = await qb
+      .leftJoinAndSelect('expense.tags', 'tag')
+      .leftJoinAndSelect('expense.paymentSource', 'paymentSource')
+      .orderBy('expense.date', 'DESC')
+      .addOrderBy('expense.created_at', 'DESC')
+      .skip(pageOptionsDto.skip)
+      .take(pageOptionsDto.take)
+      .getMany();
+
+    const meta = new PageMetaDto({ pageOptionsDto, itemCount });
+
+    return {
+      bucket: queryDto.bucket,
+      month,
+      items: rows.map((e) => this.toExpense(e)),
+      meta: {
+        page: meta.page,
+        take: meta.take,
+        itemCount: meta.itemCount,
+        pageCount: meta.pageCount,
+        hasPreviousPage: meta.hasPreviousPage,
+        hasNextPage: meta.hasNextPage,
+      },
+    };
+  }
+
+  private toExpense(expense: Expense): IExpense {
+    return {
+      id: expense.id,
+      amount: parseFloat(expense.amount as any),
+      paymentMethod: expense.paymentMethod,
+      type: expense.type,
+      description: expense.description,
+      date: expense.date,
+      source: expense.source,
+      receiptUrl: expense.receiptUrl,
+      tags: (expense.tags ?? []).map((t) => ({
+        id: t.id,
+        name: t.name,
+        color: t.color,
+      })),
+      paymentSource: expense.paymentSource
+        ? {
+            id: expense.paymentSource.id,
+            alias: expense.paymentSource.alias,
+            color: expense.paymentSource.color,
+          }
+        : null,
+      createdAt: expense.created_at,
+    };
   }
 
   async byTags(
