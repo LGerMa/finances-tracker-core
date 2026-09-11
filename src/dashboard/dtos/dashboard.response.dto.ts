@@ -3,6 +3,7 @@ import {
   ICompareTags,
   ICompareTagItem,
   ICompareTagMonth,
+  IBudgetRuleTransactions,
   IDashboardSummary,
   ITagBreakdownItem,
   ITagBreakdownTag,
@@ -13,6 +14,8 @@ import {
   RuleBucketName,
   RuleStatusLevel,
 } from '../interfaces/dashboard.interface';
+import { ExpenseResponse } from '../../expenses/dtos/expense.response.dto';
+import { PageMetaDto } from '../../common/dtos/page-meta.dto';
 
 export class DashboardSummaryResponse implements IDashboardSummary {
   @ApiProperty({ example: '2026-03' }) month: string;
@@ -96,4 +99,12 @@ export class BudgetRuleResponse implements IBudgetRule {
   breakdown: BudgetRuleBreakdownDto;
   @ApiProperty({ type: () => [BudgetRuleBucketDto] })
   rule: BudgetRuleBucketDto[];
+}
+
+export class BudgetRuleTransactionsResponse implements IBudgetRuleTransactions {
+  @ApiProperty({ enum: ['needs', 'wants', 'savings'] })
+  bucket: RuleBucketName;
+  @ApiProperty({ example: '2026-09' }) month: string;
+  @ApiProperty({ type: () => [ExpenseResponse] }) items: ExpenseResponse[];
+  @ApiProperty({ type: () => PageMetaDto }) meta: PageMetaDto;
 }

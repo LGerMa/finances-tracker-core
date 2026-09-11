@@ -10,6 +10,7 @@ import {
   Max,
   Min,
 } from 'class-validator';
+import { PageOptionsDto } from '../../common/dtos/page-options.dto';
 
 export class SummaryQueryDto {
   @ApiPropertyOptional({
@@ -83,4 +84,22 @@ export class BudgetRuleQueryDto {
   @IsString()
   @Matches(/^\d{4}-\d{2}$/, { message: 'month must be in YYYY-MM format' })
   month?: string;
+}
+
+export class BudgetRuleTransactionsQueryDto extends PageOptionsDto {
+  @ApiPropertyOptional({
+    description: 'Month in YYYY-MM format',
+    example: '2026-03',
+  })
+  @IsOptional()
+  @IsString()
+  @Matches(/^\d{4}-\d{2}$/, { message: 'month must be in YYYY-MM format' })
+  month?: string;
+
+  @ApiProperty({
+    description: 'Which 50/30/20 bucket to fetch transactions for',
+    enum: ['needs', 'wants', 'savings'],
+  })
+  @IsIn(['needs', 'wants', 'savings'])
+  bucket: 'needs' | 'wants' | 'savings';
 }
