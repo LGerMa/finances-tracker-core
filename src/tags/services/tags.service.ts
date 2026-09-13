@@ -6,6 +6,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { QueryFailedError, Repository } from 'typeorm';
 import { Tag } from '../entities/tag.entity';
+import { Budget } from '../../budgets/entities/budget.entity';
 import { CreateTagDto, UpdateTagDto } from '../dtos/tag.dto';
 import { ITag } from '../interfaces/tag.interface';
 
@@ -26,6 +27,8 @@ export class TagsService {
   constructor(
     @InjectRepository(Tag)
     private readonly tagRepository: Repository<Tag>,
+    @InjectRepository(Budget)
+    private readonly budgetRepository: Repository<Budget>,
   ) {}
 
   async findAll(userId: string): Promise<ITag[]> {
@@ -73,6 +76,7 @@ export class TagsService {
 
   async remove(userId: string, tagId: string): Promise<void> {
     const tag = await this.findOwned(userId, tagId);
+    await this.budgetRepository.delete({ userId, tagId });
     await this.tagRepository.softRemove(tag);
   }
 
