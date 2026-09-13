@@ -8,6 +8,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -19,7 +20,11 @@ import {
 } from '@nestjs/swagger';
 import { CurrentUser } from '@lgerma/nestjs-doorkeeper';
 import { BudgetsService } from '../services/budgets.service';
-import { CreateBudgetDto, UpdateBudgetDto } from '../dtos/budget.dto';
+import {
+  BudgetStatusQueryDto,
+  CreateBudgetDto,
+  UpdateBudgetDto,
+} from '../dtos/budget.dto';
 import {
   BudgetResponse,
   BudgetStatusResponse,
@@ -46,8 +51,9 @@ export class BudgetsController {
   @ApiOkResponse({ type: [BudgetStatusResponse] })
   getStatus(
     @CurrentUser() user: { id: string },
+    @Query() queryDto: BudgetStatusQueryDto,
   ): Promise<BudgetStatusResponse[]> {
-    return this.budgetsService.getStatus(user.id);
+    return this.budgetsService.getStatus(user.id, queryDto);
   }
 
   @Post()
