@@ -8,7 +8,11 @@ import { QueryFailedError, Repository } from 'typeorm';
 import { Budget } from '../entities/budget.entity';
 import { Tag } from '../../tags/entities/tag.entity';
 import { Expense } from '../../expenses/entities/expense.entity';
-import { CreateBudgetDto, UpdateBudgetDto } from '../dtos/budget.dto';
+import {
+  BudgetStatusQueryDto,
+  CreateBudgetDto,
+  UpdateBudgetDto,
+} from '../dtos/budget.dto';
 import {
   IBudget,
   IBudgetStatus,
@@ -77,7 +81,10 @@ export class BudgetsService {
     await this.budgetRepository.remove(budget);
   }
 
-  async getStatus(userId: string): Promise<IBudgetStatus[]> {
+  async getStatus(
+    userId: string,
+    queryDto: BudgetStatusQueryDto,
+  ): Promise<IBudgetStatus[]> {
     const budgets = await this.budgetRepository.find({
       where: { userId },
     });
@@ -86,13 +93,8 @@ export class BudgetsService {
 
     const tagIds = budgets.map((b) => b.tagId);
 
-    const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
-      .toISOString()
-      .split('T')[0];
-    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0)
-      .toISOString()
-      .split('T')[0];
+    const month = queryDto.month ?? this.currentMonth();
+    const { startDate, endDate } = this.monthToDateRange(month);
 
     const spendingRows: Array<{ tag_id: string; total: string }> =
       await this.expenseRepository
@@ -101,8 +103,8 @@ export class BudgetsService {
         .addSelect('SUM(expense.amount)', 'total')
         .innerJoin('expense_tags', 'et', 'et.expense_id = expense.id')
         .where('expense.user_id = :userId', { userId })
-        .andWhere('expense.date >= :startOfMonth', { startOfMonth })
-        .andWhere('expense.date <= :endOfMonth', { endOfMonth })
+        .andWhere('expense.date >= :startDate', { startDate })
+        .andWhere('expense.date < :endDate', { endDate })
         .andWhere('et.tag_id IN (:...tagIds)', { tagIds })
         .groupBy('et.tag_id')
         .getRawMany();
@@ -128,6 +130,24 @@ export class BudgetsService {
         status,
       };
     });
+  }
+
+  private currentMonth(): string {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  }
+
+  private monthToDateRange(month: string): {
+    startDate: string;
+    endDate: string;
+  } {
+    const [year, mon] = month.split('-').map(Number);
+    const start = new Date(Date.UTC(year, mon - 1, 1));
+    const end = new Date(Date.UTC(year, mon, 1));
+    return {
+      startDate: start.toISOString().slice(0, 10),
+      endDate: end.toISOString().slice(0, 10),
+    };
   }
 
   private async findOwned(userId: string, budgetId: string): Promise<Budget> {
