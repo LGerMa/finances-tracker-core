@@ -17,6 +17,7 @@ import { IncomeModule } from './income/income.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { BudgetsModule } from './budgets/budgets.module';
 import { RecurringModule } from './recurring/recurring.module';
+import { SearchModule } from './search/search.module';
 
 @Module({
   imports: [
@@ -41,6 +42,7 @@ import { RecurringModule } from './recurring/recurring.module';
     DashboardModule,
     BudgetsModule,
     RecurringModule,
+    SearchModule,
   ],
   controllers: [],
   providers: [
