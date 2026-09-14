@@ -7,18 +7,37 @@ import { DashboardService } from '../services/dashboard.service';
 
 const USER_ID = 'user-1';
 
-// budgetRule() issues two raw queries via repository.query():
-//   1) expenses grouped by type  -> [{ type, total }]
-//   2) income sum                -> [{ total, count }]
-// We stub expenseRepository.query to return the grouped rows and
-// incomeRepository.query to return the income total.
+// budgetRule() issues two query-builder aggregate queries:
+//   1) expenses grouped by type  -> getRawMany() => [{ type, total }]
+//   2) income sum                -> getRawOne()  => { total, count }
+// We stub each repository's createQueryBuilder to return a chainable
+// mock whose getRawMany/getRawOne resolve to the given rows.
+const makeQb = (raw: unknown) => {
+  const qb: any = {
+    select: jest.fn().mockReturnThis(),
+    addSelect: jest.fn().mockReturnThis(),
+    where: jest.fn().mockReturnThis(),
+    andWhere: jest.fn().mockReturnThis(),
+    groupBy: jest.fn().mockReturnThis(),
+    addGroupBy: jest.fn().mockReturnThis(),
+    orderBy: jest.fn().mockReturnThis(),
+    getRawMany: jest.fn(async () => raw),
+    getRawOne: jest.fn(async () => raw),
+  };
+  return qb;
+};
+
 const makeRepos = (
   typeRows: Array<{ type: string; total: string }>,
   incomeTotal: string,
 ) => {
-  const expenseRepository = { query: jest.fn(async () => typeRows) };
+  const expenseRepository = {
+    createQueryBuilder: jest.fn(() => makeQb(typeRows)),
+  };
   const incomeRepository = {
-    query: jest.fn(async () => [{ total: incomeTotal, count: '1' }]),
+    createQueryBuilder: jest.fn(() =>
+      makeQb({ total: incomeTotal, count: '1' }),
+    ),
   };
   const tagRepository = {};
   return { expenseRepository, incomeRepository, tagRepository };
