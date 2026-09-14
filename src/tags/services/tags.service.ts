@@ -80,10 +80,12 @@ export class TagsService {
   async remove(userId: string, tagId: string): Promise<void> {
     const tag = await this.findOwned(userId, tagId);
     await this.budgetRepository.delete({ userId, tagId });
-    await this.expenseRepository.query(
-      `DELETE FROM expense_tags WHERE tag_id = $1`,
-      [tagId],
-    );
+    await this.expenseRepository
+      .createQueryBuilder()
+      .delete()
+      .from('expense_tags')
+      .where('tag_id = :tagId', { tagId })
+      .execute();
     await this.tagRepository.softRemove(tag);
   }
 

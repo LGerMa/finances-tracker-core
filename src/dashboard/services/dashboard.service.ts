@@ -47,30 +47,34 @@ export class DashboardService {
     const month = queryDto.month ?? this.currentMonth();
     const { startDate, endDate } = this.monthToDateRange(month);
 
-    const [expenseResult] = await this.expenseRepository.query(
-      `SELECT COALESCE(SUM(amount), 0) as total, COUNT(*) as count
-       FROM expenses
-       WHERE user_id = $1 AND date >= $2 AND date < $3`,
-      [userId, startDate, endDate],
-    );
+    const expenseResult = await this.expenseRepository
+      .createQueryBuilder('expense')
+      .select('COALESCE(SUM(expense.amount), 0)', 'total')
+      .addSelect('COUNT(*)', 'count')
+      .where('expense.userId = :userId', { userId })
+      .andWhere('expense.date >= :startDate', { startDate })
+      .andWhere('expense.date < :endDate', { endDate })
+      .getRawOne<{ total: string; count: string }>();
 
-    const [incomeResult] = await this.incomeRepository.query(
-      `SELECT COALESCE(SUM(amount), 0) as total, COUNT(*) as count
-       FROM income
-       WHERE user_id = $1 AND date >= $2 AND date < $3`,
-      [userId, startDate, endDate],
-    );
+    const incomeResult = await this.incomeRepository
+      .createQueryBuilder('income')
+      .select('COALESCE(SUM(income.amount), 0)', 'total')
+      .addSelect('COUNT(*)', 'count')
+      .where('income.userId = :userId', { userId })
+      .andWhere('income.date >= :startDate', { startDate })
+      .andWhere('income.date < :endDate', { endDate })
+      .getRawOne<{ total: string; count: string }>();
 
-    const totalExpenses = parseFloat(expenseResult.total);
-    const totalIncome = parseFloat(incomeResult.total);
+    const totalExpenses = parseFloat(expenseResult!.total);
+    const totalIncome = parseFloat(incomeResult!.total);
 
     return {
       month,
       totalIncome,
       totalExpenses,
       balance: Math.round((totalIncome - totalExpenses) * 100) / 100,
-      expenseCount: parseInt(expenseResult.count, 10),
-      incomeCount: parseInt(incomeResult.count, 10),
+      expenseCount: parseInt(expenseResult!.count, 10),
+      incomeCount: parseInt(incomeResult!.count, 10),
     };
   }
 
@@ -81,21 +85,24 @@ export class DashboardService {
     const month = queryDto.month ?? this.currentMonth();
     const { startDate, endDate } = this.monthToDateRange(month);
 
-    const typeRows: Array<{ type: string; total: string }> =
-      await this.expenseRepository.query(
-        `SELECT type, COALESCE(SUM(amount), 0) AS total
-         FROM expenses
-         WHERE user_id = $1 AND date >= $2 AND date < $3
-         GROUP BY type`,
-        [userId, startDate, endDate],
-      );
+    const typeRows = await this.expenseRepository
+      .createQueryBuilder('expense')
+      .select('expense.type', 'type')
+      .addSelect('COALESCE(SUM(expense.amount), 0)', 'total')
+      .where('expense.userId = :userId', { userId })
+      .andWhere('expense.date >= :startDate', { startDate })
+      .andWhere('expense.date < :endDate', { endDate })
+      .groupBy('expense.type')
+      .getRawMany<{ type: string; total: string }>();
 
-    const [incomeResult] = await this.incomeRepository.query(
-      `SELECT COALESCE(SUM(amount), 0) as total, COUNT(*) as count
-       FROM income
-       WHERE user_id = $1 AND date >= $2 AND date < $3`,
-      [userId, startDate, endDate],
-    );
+    const incomeResult = await this.incomeRepository
+      .createQueryBuilder('income')
+      .select('COALESCE(SUM(income.amount), 0)', 'total')
+      .addSelect('COUNT(*)', 'count')
+      .where('income.userId = :userId', { userId })
+      .andWhere('income.date >= :startDate', { startDate })
+      .andWhere('income.date < :endDate', { endDate })
+      .getRawOne<{ total: string; count: string }>();
 
     const round2 = (n: number) => Math.round(n * 100) / 100;
 
@@ -114,7 +121,7 @@ export class DashboardService {
       }
     }
 
-    const income = round2(parseFloat(incomeResult.total));
+    const income = round2(parseFloat(incomeResult!.total));
 
     const spentByBucket: Record<RuleBucketName, number> = {
       needs: round2(breakdown.fixed + breakdown.variable),
@@ -231,39 +238,75 @@ export class DashboardService {
     const type = queryDto.type ?? 'expense';
     const { startDate, endDate } = this.monthToDateRange(month);
 
-    const table = type === 'expense' ? 'expenses' : 'income';
-    const joinTable = type === 'expense' ? 'expense_tags' : 'income_tags';
-    const joinColumn = type === 'expense' ? 'expense_id' : 'income_id';
-    const repo =
-      type === 'expense' ? this.expenseRepository : this.incomeRepository;
-
-    const taggedRows: Array<{
+    type Row = {
       id: string;
       name: string;
       color: string;
       total: string;
       count: string;
-    }> = await repo.query(
-      `SELECT t.id, t.name, t.color,
-                COALESCE(SUM(e.amount), 0) as total,
-                COUNT(e.id) as count
-         FROM ${table} e
-         INNER JOIN ${joinTable} et ON et.${joinColumn} = e.id
-         INNER JOIN tags t ON t.id = et.tag_id
-         WHERE e.user_id = $1 AND e.date >= $2 AND e.date < $3
-         GROUP BY t.id, t.name, t.color
-         ORDER BY total DESC`,
-      [userId, startDate, endDate],
-    );
+    };
+    type UntaggedRow = { total: string; count: string };
 
-    const [untaggedRow]: Array<{ total: string; count: string }> =
-      await repo.query(
-        `SELECT COALESCE(SUM(e.amount), 0) as total, COUNT(e.id) as count
-       FROM ${table} e
-       WHERE e.user_id = $1 AND e.date >= $2 AND e.date < $3
-         AND e.id NOT IN (SELECT ${joinColumn} FROM ${joinTable})`,
-        [userId, startDate, endDate],
-      );
+    let taggedRows: Row[];
+    let untaggedRow: UntaggedRow | undefined;
+
+    if (type === 'expense') {
+      taggedRows = await this.expenseRepository
+        .createQueryBuilder('e')
+        .innerJoin('e.tags', 't')
+        .select('t.id', 'id')
+        .addSelect('t.name', 'name')
+        .addSelect('t.color', 'color')
+        .addSelect('COALESCE(SUM(e.amount), 0)', 'total')
+        .addSelect('COUNT(e.id)', 'count')
+        .where('e.userId = :userId', { userId })
+        .andWhere('e.date >= :startDate', { startDate })
+        .andWhere('e.date < :endDate', { endDate })
+        .groupBy('t.id')
+        .addGroupBy('t.name')
+        .addGroupBy('t.color')
+        .orderBy('total', 'DESC')
+        .getRawMany<Row>();
+
+      untaggedRow = await this.expenseRepository
+        .createQueryBuilder('e')
+        .leftJoin('e.tags', 't')
+        .select('COALESCE(SUM(e.amount), 0)', 'total')
+        .addSelect('COUNT(e.id)', 'count')
+        .where('e.userId = :userId', { userId })
+        .andWhere('e.date >= :startDate', { startDate })
+        .andWhere('e.date < :endDate', { endDate })
+        .andWhere('t.id IS NULL')
+        .getRawOne<UntaggedRow>();
+    } else {
+      taggedRows = await this.incomeRepository
+        .createQueryBuilder('e')
+        .innerJoin('e.tags', 't')
+        .select('t.id', 'id')
+        .addSelect('t.name', 'name')
+        .addSelect('t.color', 'color')
+        .addSelect('COALESCE(SUM(e.amount), 0)', 'total')
+        .addSelect('COUNT(e.id)', 'count')
+        .where('e.userId = :userId', { userId })
+        .andWhere('e.date >= :startDate', { startDate })
+        .andWhere('e.date < :endDate', { endDate })
+        .groupBy('t.id')
+        .addGroupBy('t.name')
+        .addGroupBy('t.color')
+        .orderBy('total', 'DESC')
+        .getRawMany<Row>();
+
+      untaggedRow = await this.incomeRepository
+        .createQueryBuilder('e')
+        .leftJoin('e.tags', 't')
+        .select('COALESCE(SUM(e.amount), 0)', 'total')
+        .addSelect('COUNT(e.id)', 'count')
+        .where('e.userId = :userId', { userId })
+        .andWhere('e.date >= :startDate', { startDate })
+        .andWhere('e.date < :endDate', { endDate })
+        .andWhere('t.id IS NULL')
+        .getRawOne<UntaggedRow>();
+    }
 
     const result: ITagBreakdownItem[] = taggedRows.map((row) => ({
       tag: { id: row.id, name: row.name, color: row.color },
@@ -271,11 +314,11 @@ export class DashboardService {
       count: parseInt(row.count, 10),
     }));
 
-    const untaggedCount = parseInt(untaggedRow.count, 10);
+    const untaggedCount = parseInt(untaggedRow!.count, 10);
     if (untaggedCount > 0) {
       result.push({
         untagged: true,
-        total: parseFloat(untaggedRow.total),
+        total: parseFloat(untaggedRow!.total),
         count: untaggedCount,
       });
     }
@@ -300,12 +343,6 @@ export class DashboardService {
     const type = queryDto.type ?? 'expense';
     const { fromMonth, toMonth, startDate } = this.nMonthsAgo(months);
 
-    const table = type === 'expense' ? 'expenses' : 'income';
-    const joinTable = type === 'expense' ? 'expense_tags' : 'income_tags';
-    const joinColumn = type === 'expense' ? 'expense_id' : 'income_id';
-    const repo =
-      type === 'expense' ? this.expenseRepository : this.incomeRepository;
-
     const tags = await this.tagRepository
       .createQueryBuilder('tag')
       .where('tag.userId = :userId AND tag.name IN (:...tagNames)', {
@@ -323,16 +360,21 @@ export class DashboardService {
     const tagItems: ICompareTagItem[] = [];
 
     for (const tag of tags) {
-      const rows: Array<{ month: string; total: string }> = await repo.query(
-        `SELECT TO_CHAR(e.date, 'YYYY-MM') as month,
-                COALESCE(SUM(e.amount), 0) as total
-         FROM ${table} e
-         INNER JOIN ${joinTable} et ON et.${joinColumn} = e.id
-         WHERE e.user_id = $1 AND et.tag_id = $2 AND e.date >= $3
-         GROUP BY TO_CHAR(e.date, 'YYYY-MM')
-         ORDER BY month DESC`,
-        [userId, tag.id, startDate],
-      );
+      const qb =
+        type === 'expense'
+          ? this.expenseRepository.createQueryBuilder('e')
+          : this.incomeRepository.createQueryBuilder('e');
+
+      const rows = await qb
+        .innerJoin('e.tags', 't')
+        .select("TO_CHAR(e.date, 'YYYY-MM')", 'month')
+        .addSelect('COALESCE(SUM(e.amount), 0)', 'total')
+        .where('e.userId = :userId', { userId })
+        .andWhere('t.id = :tagId', { tagId: tag.id })
+        .andWhere('e.date >= :startDate', { startDate })
+        .groupBy("TO_CHAR(e.date, 'YYYY-MM')")
+        .orderBy('month', 'DESC')
+        .getRawMany<{ month: string; total: string }>();
 
       const monthData = rows.map((r) => ({
         month: r.month,
@@ -365,25 +407,25 @@ export class DashboardService {
     const months = queryDto.months ?? 6;
     const { startDate } = this.nMonthsAgo(months);
 
-    const expenseRows: Array<{ month: string; total: string }> =
-      await this.expenseRepository.query(
-        `SELECT TO_CHAR(date, 'YYYY-MM') as month, COALESCE(SUM(amount), 0) as total
-         FROM expenses
-         WHERE user_id = $1 AND date >= $2
-         GROUP BY TO_CHAR(date, 'YYYY-MM')
-         ORDER BY month DESC`,
-        [userId, startDate],
-      );
+    const expenseRows = await this.expenseRepository
+      .createQueryBuilder('expense')
+      .select("TO_CHAR(expense.date, 'YYYY-MM')", 'month')
+      .addSelect('COALESCE(SUM(expense.amount), 0)', 'total')
+      .where('expense.userId = :userId', { userId })
+      .andWhere('expense.date >= :startDate', { startDate })
+      .groupBy("TO_CHAR(expense.date, 'YYYY-MM')")
+      .orderBy('month', 'DESC')
+      .getRawMany<{ month: string; total: string }>();
 
-    const incomeRows: Array<{ month: string; total: string }> =
-      await this.incomeRepository.query(
-        `SELECT TO_CHAR(date, 'YYYY-MM') as month, COALESCE(SUM(amount), 0) as total
-         FROM income
-         WHERE user_id = $1 AND date >= $2
-         GROUP BY TO_CHAR(date, 'YYYY-MM')
-         ORDER BY month DESC`,
-        [userId, startDate],
-      );
+    const incomeRows = await this.incomeRepository
+      .createQueryBuilder('income')
+      .select("TO_CHAR(income.date, 'YYYY-MM')", 'month')
+      .addSelect('COALESCE(SUM(income.amount), 0)', 'total')
+      .where('income.userId = :userId', { userId })
+      .andWhere('income.date >= :startDate', { startDate })
+      .groupBy("TO_CHAR(income.date, 'YYYY-MM')")
+      .orderBy('month', 'DESC')
+      .getRawMany<{ month: string; total: string }>();
 
     const monthMap = new Map<
       string,

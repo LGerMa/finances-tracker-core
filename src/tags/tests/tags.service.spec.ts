@@ -9,6 +9,13 @@ import { Expense } from '../../expenses/entities/expense.entity';
 
 const USER_ID = 'user-1';
 
+type MockQueryBuilder = {
+  delete: jest.Mock;
+  from: jest.Mock;
+  where: jest.Mock;
+  execute: jest.Mock;
+};
+
 type MockRepo = {
   find: jest.Mock;
   findOne: jest.Mock;
@@ -17,6 +24,16 @@ type MockRepo = {
   softRemove: jest.Mock;
   delete: jest.Mock;
   query: jest.Mock;
+  createQueryBuilder: jest.Mock;
+};
+
+const makeQueryBuilder = (): MockQueryBuilder => {
+  const qb: Partial<MockQueryBuilder> = {};
+  qb.delete = jest.fn(() => qb);
+  qb.from = jest.fn(() => qb);
+  qb.where = jest.fn(() => qb);
+  qb.execute = jest.fn();
+  return qb as MockQueryBuilder;
 };
 
 const makeRepo = (): MockRepo => ({
@@ -27,6 +44,7 @@ const makeRepo = (): MockRepo => ({
   softRemove: jest.fn(),
   delete: jest.fn(),
   query: jest.fn(),
+  createQueryBuilder: jest.fn(() => makeQueryBuilder()),
 });
 
 const sampleTag = (over: Partial<Tag> = {}): Tag =>
@@ -78,12 +96,20 @@ describe('TagsService', () => {
     it('removes the tag from any expense it was attached to', async () => {
       const tag = sampleTag();
       tagRepo.findOne.mockResolvedValue(tag);
+      let qb: MockQueryBuilder | undefined;
+      expenseRepo.createQueryBuilder.mockImplementation(() => {
+        qb = makeQueryBuilder();
+        return qb;
+      });
+
       await service.remove(USER_ID, 'tag-1');
 
-      expect(expenseRepo.query).toHaveBeenCalledWith(
-        expect.stringContaining('DELETE FROM expense_tags'),
-        ['tag-1'],
-      );
+      expect(qb).toBeDefined();
+      expect(qb!.from).toHaveBeenCalledWith('expense_tags');
+      expect(qb!.where).toHaveBeenCalledWith('tag_id = :tagId', {
+        tagId: 'tag-1',
+      });
+      expect(qb!.execute).toHaveBeenCalled();
     });
 
     it('deletes the budget and expense links before soft-removing the tag (ordering)', async () => {
@@ -93,8 +119,12 @@ describe('TagsService', () => {
       budgetRepo.delete.mockImplementation(async () => {
         calls.push('budget.delete');
       });
-      expenseRepo.query.mockImplementation(async () => {
-        calls.push('expense_tags.delete');
+      expenseRepo.createQueryBuilder.mockImplementation(() => {
+        const qb = makeQueryBuilder();
+        qb.execute.mockImplementation(async () => {
+          calls.push('expense_tags.delete');
+        });
+        return qb;
       });
       tagRepo.softRemove.mockImplementation(async () => {
         calls.push('tag.softRemove');
